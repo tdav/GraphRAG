@@ -4,8 +4,8 @@ namespace ManagedCode.GraphRag.Tests.Covariates;
 
 public sealed class CovariateRecordTests
 {
-    [Fact]
-    public void CovariateRecord_StoresProperties()
+    [Test]
+    public async Task CovariateRecord_StoresProperties()
     {
         var record = new CovariateRecord(
             "id",
@@ -21,8 +21,8 @@ public sealed class CovariateRecordTests
             "source",
             "text-unit");
 
-        Assert.Equal("id", record.Id);
-        Assert.Equal("subject", record.SubjectId);
-        Assert.Equal("text-unit", record.TextUnitId);
+        await Assert.That(record.Id).IsEqualTo("id");
+        await Assert.That(record.SubjectId).IsEqualTo("subject");
+        await Assert.That(record.TextUnitId).IsEqualTo("text-unit");
     }
 }

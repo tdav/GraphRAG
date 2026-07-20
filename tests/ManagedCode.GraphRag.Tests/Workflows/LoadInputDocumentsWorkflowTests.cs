@@ -16,7 +16,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class LoadInputDocumentsWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task RunWorkflow_LoadsTextFiles()
     {
         var services = new ServiceCollection()
@@ -53,11 +53,14 @@ public sealed class LoadInputDocumentsWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var documents = await outputStorage.LoadTableAsync<DocumentRecord>(PipelineTableNames.Documents);
-        Assert.Equal(2, documents.Count);
-        Assert.All(documents, document => Assert.False(string.IsNullOrWhiteSpace(document.Id)));
+        await Assert.That(documents.Count).IsEqualTo(2);
+        foreach (var document in documents)
+        {
+            await Assert.That(string.IsNullOrWhiteSpace(document.Id)).IsFalse();
+        }
     }
 
-    [Fact]
+    [Test]
     public async Task RunWorkflow_LoadsCsvFiles()
     {
         var services = new ServiceCollection()
@@ -96,11 +99,11 @@ public sealed class LoadInputDocumentsWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var documents = await outputStorage.LoadTableAsync<DocumentRecord>(PipelineTableNames.Documents);
-        Assert.Equal(2, documents.Count);
-        Assert.Contains(documents, doc => doc.Title == "Intro" && doc.Metadata?["category"]?.ToString() == "news");
+        await Assert.That(documents.Count).IsEqualTo(2);
+        await Assert.That(documents.Any(doc => doc.Title == "Intro" && doc.Metadata?["category"]?.ToString() == "news")).IsTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task RunWorkflow_LoadsJsonFiles()
     {
         var services = new ServiceCollection()
@@ -143,11 +146,11 @@ public sealed class LoadInputDocumentsWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var documents = await outputStorage.LoadTableAsync<DocumentRecord>(PipelineTableNames.Documents);
-        Assert.Equal(2, documents.Count);
-        Assert.Contains(documents, doc => doc.Title == "Follow-up" && doc.Metadata?["category"]?.ToString() == "updates");
+        await Assert.That(documents.Count).IsEqualTo(2);
+        await Assert.That(documents.Any(doc => doc.Title == "Follow-up" && doc.Metadata?["category"]?.ToString() == "updates")).IsTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task RunWorkflow_ParsesJsonLinesFallback()
     {
         var services = new ServiceCollection()
@@ -185,8 +188,8 @@ public sealed class LoadInputDocumentsWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var documents = await outputStorage.LoadTableAsync<DocumentRecord>(PipelineTableNames.Documents);
-        Assert.Equal(2, documents.Count);
-        Assert.Contains(documents, doc => doc.Text.Contains("Alpha", StringComparison.Ordinal));
-        Assert.Contains(documents, doc => doc.Text.Contains("Beta", StringComparison.Ordinal));
+        await Assert.That(documents.Count).IsEqualTo(2);
+        await Assert.That(documents.Any(doc => doc.Text.Contains("Alpha", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(documents.Any(doc => doc.Text.Contains("Beta", StringComparison.Ordinal))).IsTrue();
     }
 }

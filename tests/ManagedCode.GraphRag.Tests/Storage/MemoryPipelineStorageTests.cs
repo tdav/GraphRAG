@@ -6,7 +6,7 @@ namespace ManagedCode.GraphRag.Tests.Storage;
 
 public sealed class MemoryPipelineStorageTests
 {
-    [Fact]
+    [Test]
     public async Task FindAsync_ReturnsMetadataFromRegexGroups()
     {
         var storage = new MemoryPipelineStorage();
@@ -22,42 +22,42 @@ public sealed class MemoryPipelineStorageTests
             matches.Add(item);
         }
 
-        Assert.Single(matches);
+        await Assert.That(matches).HasSingleItem();
         var match = matches[0];
-        Assert.Equal("news/doc-2.json", match.Path);
-        Assert.Equal("news", match.Metadata["category"]);
-        Assert.Equal("doc-2.json", match.Metadata["file"]);
+        await Assert.That(match.Path).IsEqualTo("news/doc-2.json");
+        await Assert.That(match.Metadata["category"]).IsEqualTo("news");
+        await Assert.That(match.Metadata["file"]).IsEqualTo("doc-2.json");
     }
 
-    [Fact]
+    [Test]
     public async Task GetAsync_ReturnsStoredContent()
     {
         var storage = new MemoryPipelineStorage();
         await storage.SetAsync("data/file.txt", new MemoryStream(Encoding.UTF8.GetBytes("payload")));
 
         await using var binaryStream = await storage.GetAsync("data/file.txt", asBytes: true);
-        Assert.NotNull(binaryStream);
+        await Assert.That(binaryStream).IsNotNull();
         using var reader = new StreamReader(binaryStream!, Encoding.UTF8);
-        Assert.Equal("payload", await reader.ReadToEndAsync());
+        await Assert.That(await reader.ReadToEndAsync()).IsEqualTo("payload");
 
         await using var textStream = await storage.GetAsync("data/file.txt", encoding: Encoding.UTF8);
-        Assert.NotNull(textStream);
+        await Assert.That(textStream).IsNotNull();
         using var textReader = new StreamReader(textStream!, Encoding.UTF8);
-        Assert.Equal("payload", await textReader.ReadToEndAsync());
+        await Assert.That(await textReader.ReadToEndAsync()).IsEqualTo("payload");
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteAsync_RemovesEntries()
     {
         var storage = new MemoryPipelineStorage();
         await storage.SetAsync("item.bin", new MemoryStream([1, 2, 3]));
 
-        Assert.True(await storage.HasAsync("item.bin"));
+        await Assert.That(await storage.HasAsync("item.bin")).IsTrue();
         await storage.DeleteAsync("item.bin");
-        Assert.False(await storage.HasAsync("item.bin"));
+        await Assert.That(await storage.HasAsync("item.bin")).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task ClearAsync_RemovesScopedEntriesOnly()
     {
         var root = new MemoryPipelineStorage();
@@ -68,7 +68,7 @@ public sealed class MemoryPipelineStorageTests
 
         await child.ClearAsync();
 
-        Assert.True(await root.HasAsync("root.txt"));
-        Assert.False(await child.HasAsync("child.txt"));
+        await Assert.That(await root.HasAsync("root.txt")).IsTrue();
+        await Assert.That(await child.HasAsync("child.txt")).IsFalse();
     }
 }

@@ -5,8 +5,8 @@ namespace ManagedCode.GraphRag.Tests.Runtime;
 
 public sealed class DefaultPipelineFactoryTests
 {
-    [Fact]
-    public void BuildIndexingPipeline_ResolvesKeyedDelegates()
+    [Test]
+    public async Task BuildIndexingPipeline_ResolvesKeyedDelegates()
     {
         WorkflowDelegate first = (config, context, token) => ValueTask.FromResult(new WorkflowResult("first"));
         WorkflowDelegate second = (config, context, token) => ValueTask.FromResult(new WorkflowResult("second"));
@@ -21,15 +21,15 @@ public sealed class DefaultPipelineFactoryTests
         var descriptor = new IndexingPipelineDescriptor("pipeline", new[] { "one", "two" });
         var pipeline = factory.BuildIndexingPipeline(descriptor);
 
-        Assert.Equal("pipeline", pipeline.Name);
-        Assert.Equal(new[] { "one", "two" }, pipeline.Names);
+        await Assert.That(pipeline.Name).IsEqualTo("pipeline");
+        await Assert.That(pipeline.Names).IsEquivalentTo(new[] { "one", "two" });
 
-        Assert.Equal(first, pipeline.Steps[0].Delegate);
-        Assert.Equal(second, pipeline.Steps[1].Delegate);
+        await Assert.That((object)pipeline.Steps[0].Delegate).IsEqualTo(first);
+        await Assert.That((object)pipeline.Steps[1].Delegate).IsEqualTo(second);
     }
 
-    [Fact]
-    public void BuildQueryPipeline_UsesQueryDescriptor()
+    [Test]
+    public async Task BuildQueryPipeline_UsesQueryDescriptor()
     {
         WorkflowDelegate handler = (config, context, token) => ValueTask.FromResult(new WorkflowResult("query"));
         var services = new ServiceCollection();
@@ -41,8 +41,8 @@ public sealed class DefaultPipelineFactoryTests
         var descriptor = new QueryPipelineDescriptor("query", new[] { "query-step" });
         var pipeline = factory.BuildQueryPipeline(descriptor);
 
-        Assert.Equal("query", pipeline.Name);
-        Assert.Single(pipeline.Steps);
-        Assert.Equal(handler, pipeline.Steps[0].Delegate);
+        await Assert.That(pipeline.Name).IsEqualTo("query");
+        await Assert.That(pipeline.Steps).HasSingleItem();
+        await Assert.That((object)pipeline.Steps[0].Delegate).IsEqualTo(handler);
     }
 }

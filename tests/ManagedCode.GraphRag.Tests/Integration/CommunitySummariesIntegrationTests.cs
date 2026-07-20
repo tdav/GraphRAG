@@ -25,7 +25,7 @@ public sealed class CommunitySummariesIntegrationTests : IDisposable
         Directory.CreateDirectory(_rootDir);
     }
 
-    [Fact]
+    [Test]
     public async Task CommunitySummariesWorkflow_UsesManualPromptOverrides()
     {
         var outputDir = Path.Combine(_rootDir, "output");
@@ -107,20 +107,21 @@ public sealed class CommunitySummariesIntegrationTests : IDisposable
         var summaries = CommunitySummariesWorkflow.Create();
         await summaries(config, context, CancellationToken.None);
 
-        Assert.Equal(systemTemplate, capturedSystem);
-        Assert.DoesNotContain("{{", capturedUser, StringComparison.Ordinal);
-        Assert.Contains("Alice", capturedUser, StringComparison.Ordinal);
-        Assert.Contains("Bob", capturedUser, StringComparison.Ordinal);
+        await Assert.That(capturedSystem).IsEqualTo(systemTemplate);
+        await Assert.That(capturedUser).DoesNotContain("{{", StringComparison.Ordinal);
+        await Assert.That(capturedUser).Contains("Alice", StringComparison.Ordinal);
+        await Assert.That(capturedUser).Contains("Bob", StringComparison.Ordinal);
 
         var reports = await outputStorage.LoadTableAsync<CommunityReportRecord>(PipelineTableNames.CommunityReports);
-        var report = Assert.Single(reports);
-        Assert.Equal("Manual summary output", report.Summary);
-        Assert.Equal(2, report.EntityTitles.Count);
-        Assert.Equal(1, context.Items["community_reports:count"]);
-        Assert.True(File.Exists(Path.Combine(outputDir, $"{PipelineTableNames.CommunityReports}.json")));
+        await Assert.That(reports).HasSingleItem();
+        var report = reports.Single();
+        await Assert.That(report.Summary).IsEqualTo("Manual summary output");
+        await Assert.That(report.EntityTitles.Count).IsEqualTo(2);
+        await Assert.That(context.Items["community_reports:count"]).IsEqualTo(1);
+        await Assert.That(File.Exists(Path.Combine(outputDir, $"{PipelineTableNames.CommunityReports}.json"))).IsTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task CommunitySummariesWorkflow_PrefersManualOverAutoPrompts()
     {
         var outputDir = Path.Combine(_rootDir, "output-auto");
@@ -209,14 +210,15 @@ public sealed class CommunitySummariesIntegrationTests : IDisposable
         var summaries = CommunitySummariesWorkflow.Create();
         await summaries(config, context, CancellationToken.None);
 
-        Assert.Equal("Manual system override", capturedSystem);
-        Assert.Contains("Auto template", capturedUser, StringComparison.Ordinal);
-        Assert.DoesNotContain("{{", capturedUser, StringComparison.Ordinal);
+        await Assert.That(capturedSystem).IsEqualTo("Manual system override");
+        await Assert.That(capturedUser).Contains("Auto template", StringComparison.Ordinal);
+        await Assert.That(capturedUser).DoesNotContain("{{", StringComparison.Ordinal);
 
         var reports = await outputStorage.LoadTableAsync<CommunityReportRecord>(PipelineTableNames.CommunityReports);
-        var report = Assert.Single(reports);
-        Assert.Equal("Combined summary", report.Summary);
-        Assert.Equal(2, report.EntityTitles.Count);
+        await Assert.That(reports).HasSingleItem();
+        var report = reports.Single();
+        await Assert.That(report.Summary).IsEqualTo("Combined summary");
+        await Assert.That(report.EntityTitles.Count).IsEqualTo(2);
     }
 
     public void Dispose()

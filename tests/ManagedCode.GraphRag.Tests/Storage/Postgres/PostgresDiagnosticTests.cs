@@ -7,10 +7,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class PostgresDiagnosticTests(GraphRagApplicationFixture fixture)
 {
-    [Fact]
+    [Test]
     public async Task PostgresExplainService_ReturnsPlanOutput()
     {
         var store = fixture.Services.GetKeyedService<PostgresGraphStore>("postgres");
@@ -27,15 +27,15 @@ public sealed class PostgresDiagnosticTests(GraphRagApplicationFixture fixture)
         var service = new PostgresExplainService(store, NullLogger<PostgresExplainService>.Instance);
         var plan = await service.GetFormattedPlanAsync("MATCH (n:Person) RETURN n LIMIT 1");
 
-        Assert.Contains("EXPLAIN plan:", plan, StringComparison.Ordinal);
-        Assert.Contains("Person", plan, StringComparison.OrdinalIgnoreCase);
+        await Assert.That(plan).Contains("EXPLAIN plan:");
+        await Assert.That(plan.Contains("Person", StringComparison.OrdinalIgnoreCase)).IsTrue();
 
         using var writer = new StringWriter();
         await service.WritePlanAsync("MATCH (n:Person) RETURN n LIMIT 1", writer, cancellationToken: default);
-        Assert.False(string.IsNullOrWhiteSpace(writer.ToString()));
+        await Assert.That(string.IsNullOrWhiteSpace(writer.ToString())).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task PostgresIngestionBenchmark_UpsertsNodesAndRelationships()
     {
         var store = fixture.Services.GetKeyedService<PostgresGraphStore>("postgres");
@@ -61,8 +61,8 @@ public sealed class PostgresDiagnosticTests(GraphRagApplicationFixture fixture)
 
         var result = await benchmark.RunAsync(stream, options);
 
-        Assert.Equal(3, result.NodesWritten);
-        Assert.Equal(2, result.RelationshipsWritten);
+        await Assert.That(result.NodesWritten).IsEqualTo(3);
+        await Assert.That(result.RelationshipsWritten).IsEqualTo(2);
 
         var relationships = new List<GraphRelationship>();
         await foreach (var relationship in store.GetOutgoingRelationshipsAsync($"{prefix}-100"))
@@ -70,7 +70,10 @@ public sealed class PostgresDiagnosticTests(GraphRagApplicationFixture fixture)
             relationships.Add(relationship);
         }
 
-        Assert.Equal(2, relationships.Count);
-        Assert.All(relationships, rel => Assert.Equal("KNOWS", rel.Type));
+        await Assert.That(relationships.Count).IsEqualTo(2);
+        foreach (var rel in relationships)
+        {
+            await Assert.That(rel.Type).IsEqualTo("KNOWS");
+        }
     }
 }

@@ -16,7 +16,7 @@ using Testcontainers.PostgreSql;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-public sealed class GraphRagApplicationFixture : IAsyncLifetime
+public sealed class GraphRagApplicationFixture : TUnit.Core.Interfaces.IAsyncInitializer, IAsyncDisposable
 {
     private const string Neo4jPassword = "test1234";
     private const string PostgresPassword = "postgres";
@@ -211,7 +211,7 @@ public sealed class GraphRagApplicationFixture : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_scope is AsyncServiceScope scope)
         {

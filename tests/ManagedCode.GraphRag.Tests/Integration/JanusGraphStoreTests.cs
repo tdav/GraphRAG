@@ -4,12 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class JanusGraphStoreTests(GraphRagApplicationFixture fixture)
 {
     private readonly GraphRagApplicationFixture _fixture = fixture;
 
-    [Fact]
+    [Test]
     public async Task JanusGraphStore_UpsertsNodesAndRelationships()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("janus");
@@ -32,12 +32,13 @@ public sealed class JanusGraphStoreTests(GraphRagApplicationFixture fixture)
             relationships.Add(relationship);
         }
 
-        var stored = Assert.Single(relationships, r => r.TargetId == bobId);
-        Assert.Equal("KNOWS", stored.Type);
-        Assert.Equal(2024, Convert.ToInt32(stored.Properties["since"], CultureInfo.InvariantCulture));
+        await Assert.That(relationships).HasSingleItem(r => r.TargetId == bobId);
+        var stored = relationships.Single(r => r.TargetId == bobId);
+        await Assert.That(stored.Type).IsEqualTo("KNOWS");
+        await Assert.That(Convert.ToInt32(stored.Properties["since"], CultureInfo.InvariantCulture)).IsEqualTo(2024);
     }
 
-    [Fact]
+    [Test]
     public async Task JanusGraphStore_ReturnsNodes()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("janus");
@@ -56,10 +57,10 @@ public sealed class JanusGraphStoreTests(GraphRagApplicationFixture fixture)
             nodes.Add(node);
         }
 
-        Assert.Contains(nodes, node => node.Id == id && node.Properties["title"]?.ToString() == "GraphRecord");
+        await Assert.That(nodes).Contains(node => node.Id == id && node.Properties["title"]?.ToString() == "GraphRecord");
     }
 
-    [Fact]
+    [Test]
     public async Task JanusGraphStore_ReturnsRelationships()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("janus");
@@ -82,9 +83,8 @@ public sealed class JanusGraphStoreTests(GraphRagApplicationFixture fixture)
             relationships.Add(relationship);
         }
 
-        Assert.Contains(
-            relationships,
-            rel => rel.SourceId == src && rel.TargetId == dst && rel.Type == "LINKS_TO" &&
-                   Math.Abs(Convert.ToDouble(rel.Properties["weight"], CultureInfo.InvariantCulture) - 0.75) < 0.001);
+        await Assert.That(relationships)
+            .Contains(rel => rel.SourceId == src && rel.TargetId == dst && rel.Type == "LINKS_TO" &&
+                              Math.Abs(Convert.ToDouble(rel.Properties["weight"], CultureInfo.InvariantCulture) - 0.75) < 0.001);
     }
 }

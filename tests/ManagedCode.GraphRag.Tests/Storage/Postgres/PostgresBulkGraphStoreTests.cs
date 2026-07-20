@@ -8,12 +8,12 @@ using Npgsql;
 
 namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class PostgresBulkGraphStoreTests(GraphRagApplicationFixture fixture)
 {
     private readonly GraphRagApplicationFixture _fixture = fixture;
 
-    [Fact]
+    [Test]
     public async Task BulkUpserts_InsertNodesAndRelationships()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -55,7 +55,7 @@ public sealed class PostgresBulkGraphStoreTests(GraphRagApplicationFixture fixtu
             nodes.Add(node);
         }
 
-        Assert.Equal(3, nodes.Count);
+        await Assert.That(nodes.Count).IsEqualTo(3);
 
         var relationships = new List<GraphRelationship>();
         await foreach (var relationship in store.GetRelationshipsAsync(cancellationToken: CancellationToken.None))
@@ -63,12 +63,12 @@ public sealed class PostgresBulkGraphStoreTests(GraphRagApplicationFixture fixtu
             relationships.Add(relationship);
         }
 
-        Assert.Equal(3, relationships.Count);
+        await Assert.That(relationships.Count).IsEqualTo(3);
 
         await CleanupGraphAsync(connectionManager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task BulkUpserts_WorkWithinScopedConnection()
     {
         var connectionString = ConfigurePool(_fixture.PostgresConnectionString, maxConnections: 4);
@@ -110,7 +110,7 @@ public sealed class PostgresBulkGraphStoreTests(GraphRagApplicationFixture fixtu
             nodes.Add(node);
         }
 
-        Assert.Equal(2, nodes.Count);
+        await Assert.That(nodes.Count).IsEqualTo(2);
 
         await CleanupGraphAsync(connectionManager, graphName);
     }

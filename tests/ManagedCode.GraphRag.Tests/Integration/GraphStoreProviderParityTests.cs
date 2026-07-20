@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fixture)
 {
     public static IEnumerable<object[]> Providers => GraphStoreTestProviders.ProviderKeysAndLabels;
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_ExecuteFullCrudFlows(string providerKey, string label)
     {
         var store = fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -29,9 +29,9 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
 
         await store.UpsertNodeAsync(rootId, label, new Dictionary<string, object?> { ["name"] = null, ["count"] = 3, ["updated"] = true });
         var rootNode = await FindNodeAsync(store, rootId);
-        Assert.NotNull(rootNode);
-        Assert.Equal(3, Convert.ToInt32(rootNode!.Properties["count"], CultureInfo.InvariantCulture));
-        Assert.False(rootNode.Properties.ContainsKey("name"));
+        await Assert.That(rootNode).IsNotNull();
+        await Assert.That(Convert.ToInt32(rootNode!.Properties["count"], CultureInfo.InvariantCulture)).IsEqualTo(3);
+        await Assert.That(rootNode.Properties.ContainsKey("name")).IsFalse();
 
         var batchedNodes = Enumerable.Range(0, 5)
             .Select(index => new GraphNodeUpsert(
@@ -43,7 +43,7 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
         await store.UpsertNodesAsync(batchedNodes);
         foreach (var node in batchedNodes)
         {
-            Assert.NotNull(await FindNodeAsync(store, node.Id));
+            await Assert.That(await FindNodeAsync(store, node.Id)).IsNotNull();
         }
 
         var relationships = new List<GraphRelationshipUpsert>
@@ -54,7 +54,7 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
 
         await store.UpsertRelationshipsAsync(relationships);
         var outgoing = await CollectAsync(store.GetOutgoingRelationshipsAsync(rootId));
-        Assert.Contains(outgoing, rel => rel.TargetId == neighborId && rel.Type == "LINKS");
+        await Assert.That(outgoing).Contains(rel => rel.TargetId == neighborId && rel.Type == "LINKS");
 
         var additionalKeys = outgoing
             .Where(rel => rel.TargetId.StartsWith(prefix, StringComparison.Ordinal))
@@ -68,7 +68,8 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
         var relationshipCheck = await CollectAsync(store.GetOutgoingRelationshipsAsync(rootId));
         foreach (var key in additionalKeys)
         {
-            Assert.DoesNotContain(relationshipCheck, rel => rel.SourceId == key.SourceId && rel.TargetId == key.TargetId && rel.Type == key.Type);
+            await Assert.That(relationshipCheck)
+                .DoesNotContain(rel => rel.SourceId == key.SourceId && rel.TargetId == key.TargetId && rel.Type == key.Type);
         }
 
         var nodesToDelete = batchedNodes.Select(node => node.Id).Append(neighborId).ToList();
@@ -79,12 +80,12 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
 
         foreach (var nodeId in nodesToDelete)
         {
-            Assert.Null(await FindNodeAsync(store, nodeId));
+            await Assert.That(await FindNodeAsync(store, nodeId)).IsNull();
         }
     }
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_HandleNodeInjectionPayloads(string providerKey, string label)
     {
         var store = fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -102,15 +103,15 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
         await store.UpsertNodeAsync(nodeId, label, new Dictionary<string, object?> { ["bio"] = payload });
 
         var stored = await FindNodeAsync(store, nodeId);
-        Assert.NotNull(stored);
-        Assert.Equal(payload, stored!.Properties["bio"]?.ToString());
+        await Assert.That(stored).IsNotNull();
+        await Assert.That(stored!.Properties["bio"]?.ToString()).IsEqualTo(payload);
 
         var sentinel = await FindNodeAsync(store, sentinelId);
-        Assert.NotNull(sentinel);
+        await Assert.That(sentinel).IsNotNull();
     }
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_HandleRelationshipInjectionPayloads(string providerKey, string label)
     {
         var store = fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -130,12 +131,13 @@ public sealed class GraphStoreProviderParityTests(GraphRagApplicationFixture fix
         await store.UpsertRelationshipAsync(sourceId, targetId, "TRANSFERRED", new Dictionary<string, object?> { ["weight"] = maliciousWeight, ["flag"] = false });
 
         var relationships = await CollectAsync(store.GetOutgoingRelationshipsAsync(sourceId));
-        var stored = Assert.Single(relationships, rel => rel.TargetId == targetId);
-        Assert.Equal(maliciousWeight, stored.Properties["weight"]?.ToString());
-        Assert.False(Convert.ToBoolean(stored.Properties["flag"], CultureInfo.InvariantCulture));
+        await Assert.That(relationships).HasSingleItem(rel => rel.TargetId == targetId);
+        var stored = relationships.Single(rel => rel.TargetId == targetId);
+        await Assert.That(stored.Properties["weight"]?.ToString()).IsEqualTo(maliciousWeight);
+        await Assert.That(Convert.ToBoolean(stored.Properties["flag"], CultureInfo.InvariantCulture)).IsFalse();
 
         var targetNode = await FindNodeAsync(store, targetId);
-        Assert.NotNull(targetNode);
+        await Assert.That(targetNode).IsNotNull();
     }
 
     private static async Task<List<T>> CollectAsync<T>(IAsyncEnumerable<T> source)

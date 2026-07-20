@@ -26,7 +26,7 @@ public sealed class HeuristicMaintenanceIntegrationTests : IDisposable
         Directory.CreateDirectory(_rootDir);
     }
 
-    [Fact]
+    [Test]
     public async Task HeuristicMaintenanceWorkflow_AppliesBudgetsAndSemanticDeduplication()
     {
         var outputDir = PrepareDirectory("output-maintenance");
@@ -120,22 +120,24 @@ public sealed class HeuristicMaintenanceIntegrationTests : IDisposable
         await workflow(config, context, CancellationToken.None);
 
         var processed = await outputStorage.LoadTableAsync<TextUnitRecord>(PipelineTableNames.TextUnits);
-        Assert.Equal(2, processed.Count);
+        await Assert.That(processed.Count).IsEqualTo(2);
 
-        var merged = Assert.Single(processed, unit => unit.Id == "a");
-        Assert.Equal(2, merged.DocumentIds.Count);
-        Assert.Contains("doc-1", merged.DocumentIds, StringComparer.OrdinalIgnoreCase);
-        Assert.Contains("doc-2", merged.DocumentIds, StringComparer.OrdinalIgnoreCase);
-        Assert.Equal(75, merged.TokenCount);
+        await Assert.That(processed).HasSingleItem(unit => unit.Id == "a");
+        var merged = processed.Single(unit => unit.Id == "a");
+        await Assert.That(merged.DocumentIds.Count).IsEqualTo(2);
+        await Assert.That(merged.DocumentIds).Contains("doc-1", StringComparer.OrdinalIgnoreCase);
+        await Assert.That(merged.DocumentIds).Contains("doc-2", StringComparer.OrdinalIgnoreCase);
+        await Assert.That(merged.TokenCount).IsEqualTo(75);
 
-        var survivor = Assert.Single(processed, unit => unit.Id == "b");
-        Assert.Single(survivor.DocumentIds);
-        Assert.Equal("doc-1", survivor.DocumentIds[0]);
-        Assert.DoesNotContain(processed, unit => unit.Id == "c");
-        Assert.DoesNotContain(processed, unit => unit.Id == "d" && unit.DocumentIds.Count == 1);
+        await Assert.That(processed).HasSingleItem(unit => unit.Id == "b");
+        var survivor = processed.Single(unit => unit.Id == "b");
+        await Assert.That(survivor.DocumentIds).HasSingleItem();
+        await Assert.That(survivor.DocumentIds[0]).IsEqualTo("doc-1");
+        await Assert.That(processed).DoesNotContain(unit => unit.Id == "c");
+        await Assert.That(processed).DoesNotContain(unit => unit.Id == "d" && unit.DocumentIds.Count == 1);
     }
 
-    [Fact]
+    [Test]
     public async Task ExtractGraphWorkflow_LinksOrphansAndEnforcesRelationshipFloors()
     {
         var outputDir = PrepareDirectory("output-graph");
@@ -213,25 +215,28 @@ public sealed class HeuristicMaintenanceIntegrationTests : IDisposable
         await workflow(config, context, CancellationToken.None);
 
         var relationships = await outputStorage.LoadTableAsync<RelationshipRecord>(PipelineTableNames.Relationships);
-        Assert.Equal(2, relationships.Count);
+        await Assert.That(relationships.Count).IsEqualTo(2);
 
-        var direct = Assert.Single(relationships, rel => rel.Source == "Alice" && rel.Target == "Bob");
-        Assert.Equal(0.4, direct.Weight, 3);
-        Assert.Contains("unit-1", direct.TextUnitIds);
-        Assert.False(direct.Bidirectional);
+        await Assert.That(relationships).HasSingleItem(rel => rel.Source == "Alice" && rel.Target == "Bob");
+        var direct = relationships.Single(rel => rel.Source == "Alice" && rel.Target == "Bob");
+        await Assert.That(direct.Weight).IsEqualTo(0.4).Within(0.0005);
+        await Assert.That(direct.TextUnitIds).Contains("unit-1");
+        await Assert.That(direct.Bidirectional).IsFalse();
 
-        var synthetic = Assert.Single(relationships, rel => rel.Source == "Charlie" && rel.Target == "Alice");
-        Assert.True(synthetic.Bidirectional);
-        Assert.Equal(0.5, synthetic.Weight, 3);
-        var orphanUnit = Assert.Single(synthetic.TextUnitIds);
-        Assert.Equal("unit-2", orphanUnit);
+        await Assert.That(relationships).HasSingleItem(rel => rel.Source == "Charlie" && rel.Target == "Alice");
+        var synthetic = relationships.Single(rel => rel.Source == "Charlie" && rel.Target == "Alice");
+        await Assert.That(synthetic.Bidirectional).IsTrue();
+        await Assert.That(synthetic.Weight).IsEqualTo(0.5).Within(0.0005);
+        await Assert.That(synthetic.TextUnitIds).HasSingleItem();
+        var orphanUnit = synthetic.TextUnitIds.Single();
+        await Assert.That(orphanUnit).IsEqualTo("unit-2");
 
         var entities = await outputStorage.LoadTableAsync<EntityRecord>(PipelineTableNames.Entities);
-        Assert.Equal(3, entities.Count);
-        Assert.Contains(entities, entity => entity.Title == "Charlie");
+        await Assert.That(entities.Count).IsEqualTo(3);
+        await Assert.That(entities).Contains(entity => entity.Title == "Charlie");
     }
 
-    [Fact]
+    [Test]
     public async Task CreateCommunitiesWorkflow_UsesFastLabelPropagationAssignments()
     {
         var outputDir = PrepareDirectory("output-communities");
@@ -292,8 +297,9 @@ public sealed class HeuristicMaintenanceIntegrationTests : IDisposable
         await workflow(config, context, CancellationToken.None);
 
         var communities = await outputStorage.LoadTableAsync<CommunityRecord>(PipelineTableNames.Communities);
-        Assert.Equal(2, communities.Count);
-        Assert.Equal(communities.Count, Assert.IsType<int>(context.Items["create_communities:count"]));
+        await Assert.That(communities.Count).IsEqualTo(2);
+        await Assert.That(context.Items["create_communities:count"]).IsOfType(typeof(int));
+        await Assert.That((int)context.Items["create_communities:count"]!).IsEqualTo(communities.Count);
 
         var titleLookup = entities.ToDictionary(entity => entity.Id, entity => entity.Title, StringComparer.OrdinalIgnoreCase);
 
@@ -304,8 +310,8 @@ public sealed class HeuristicMaintenanceIntegrationTests : IDisposable
                 .ToArray())
             .ToList();
 
-        Assert.Contains(members, group => group.SequenceEqual(new[] { "Alice", "Bob", "Charlie" }));
-        Assert.Contains(members, group => group.SequenceEqual(new[] { "Diana", "Eve" }));
+        await Assert.That(members).Contains(group => group.SequenceEqual(new[] { "Alice", "Bob", "Charlie" }));
+        await Assert.That(members).Contains(group => group.SequenceEqual(new[] { "Diana", "Eve" }));
     }
 
     public void Dispose()

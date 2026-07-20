@@ -12,7 +12,7 @@ namespace ManagedCode.GraphRag.Tests.Integration;
 
 public sealed class IndexingPipelineRunnerTests
 {
-    [Fact]
+    [Test]
     public async Task RunAsync_ProcessesTextDocuments()
     {
         using var temp = new TempDirectory();
@@ -52,19 +52,19 @@ public sealed class IndexingPipelineRunnerTests
 
         var results = await runner.RunAsync(config);
 
-        Assert.NotEmpty(results);
-        Assert.Contains(results, result => result.Workflow == CreateFinalDocumentsWorkflow.Name);
+        await Assert.That(results).IsNotEmpty();
+        await Assert.That(results).Contains(result => result.Workflow == CreateFinalDocumentsWorkflow.Name);
 
         var documentsPath = Path.Combine(outputDir, PipelineTableNames.Documents + ".json");
-        Assert.True(File.Exists(documentsPath));
+        await Assert.That(File.Exists(documentsPath)).IsTrue();
 
         using var documentStream = File.OpenRead(documentsPath);
         var documents = await JsonSerializer.DeserializeAsync<JsonElement>(documentStream);
-        Assert.True(documents.ValueKind == JsonValueKind.Array);
-        Assert.Equal(1, documents.GetArrayLength());
+        await Assert.That(documents.ValueKind == JsonValueKind.Array).IsTrue();
+        await Assert.That(documents.GetArrayLength()).IsEqualTo(1);
 
         var textUnitsPath = Path.Combine(outputDir, PipelineTableNames.TextUnits + ".json");
-        Assert.True(File.Exists(textUnitsPath));
+        await Assert.That(File.Exists(textUnitsPath)).IsTrue();
     }
 
     private sealed class TempDirectory : IDisposable

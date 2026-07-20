@@ -4,30 +4,30 @@ namespace ManagedCode.GraphRag.Tests.Config;
 
 public sealed class GraphRagConfigTests
 {
-    [Fact]
-    public void CacheConfig_UsesFileDefaults()
+    [Test]
+    public async Task CacheConfig_UsesFileDefaults()
     {
         var cache = new CacheConfig();
-        Assert.Equal(CacheType.File, cache.Type);
-        Assert.Equal("cache", cache.BaseDir);
-        Assert.Null(cache.ConnectionString);
+        await Assert.That(cache.Type).IsEqualTo(CacheType.File);
+        await Assert.That(cache.BaseDir).IsEqualTo("cache");
+        await Assert.That(cache.ConnectionString).IsNull();
     }
 
-    [Fact]
-    public void ExtractGraphNlpConfig_HasTextAnalyzerDefaults()
+    [Test]
+    public async Task ExtractGraphNlpConfig_HasTextAnalyzerDefaults()
     {
         var config = new ExtractGraphNlpConfig();
 
-        Assert.True(config.NormalizeEdgeWeights);
-        Assert.Equal(NounPhraseExtractorType.RegexEnglish, config.TextAnalyzer.ExtractorType);
-        Assert.Contains("stuff", config.TextAnalyzer.ExcludeNouns);
-        Assert.Equal("PROPN", config.TextAnalyzer.NounPhraseGrammars["PROPN,PROPN"]);
-        Assert.Equal(25, config.ConcurrentRequests);
-        Assert.Equal(AsyncType.Threaded, config.AsyncMode);
+        await Assert.That(config.NormalizeEdgeWeights).IsTrue();
+        await Assert.That(config.TextAnalyzer.ExtractorType).IsEqualTo(NounPhraseExtractorType.RegexEnglish);
+        await Assert.That(config.TextAnalyzer.ExcludeNouns).Contains("stuff");
+        await Assert.That(config.TextAnalyzer.NounPhraseGrammars["PROPN,PROPN"]).IsEqualTo("PROPN");
+        await Assert.That(config.ConcurrentRequests).IsEqualTo(25);
+        await Assert.That(config.AsyncMode).IsEqualTo(AsyncType.Threaded);
     }
 
-    [Fact]
-    public void ClaimExtractionConfig_ReadsPromptFromRoot()
+    [Test]
+    public async Task ClaimExtractionConfig_ReadsPromptFromRoot()
     {
         var tempRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempRoot);
@@ -45,10 +45,10 @@ public sealed class GraphRagConfigTests
             };
 
             var strategy = config.GetResolvedStrategy(tempRoot);
-            Assert.Equal("chat", strategy["model_id"]);
-            Assert.Equal("Prompt Body", strategy["extraction_prompt"]);
-            Assert.Equal("desc", strategy["claim_description"]);
-            Assert.Equal(2, strategy["max_gleanings"]);
+            await Assert.That(strategy["model_id"]).IsEqualTo("chat");
+            await Assert.That(strategy["extraction_prompt"]).IsEqualTo("Prompt Body");
+            await Assert.That(strategy["claim_description"]).IsEqualTo("desc");
+            await Assert.That(strategy["max_gleanings"]).IsEqualTo(2);
         }
         finally
         {

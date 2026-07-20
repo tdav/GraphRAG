@@ -5,22 +5,27 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <UseTestingPlatformProtocol>true</UseTestingPlatformProtocol>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <TestingPlatformCaptureOutput>false</TestingPlatformCaptureOutput>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="TUnit" />
+    <!-- Cosmos SDK loads Newtonsoft.Json at runtime; it was previously pulled in transitively by
+         Microsoft.NET.Test.Sdk, which TUnit replaces, so reference it explicitly. -->
+    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Testcontainers.CosmosDb" />
     <PackageReference Include="Testcontainers.JanusGraph" />
     <PackageReference Include="Testcontainers.Neo4j" />
     <PackageReference Include="Testcontainers.PostgreSql" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,10 +34,6 @@
     <ProjectReference Include="..\..\src\ManagedCode.GraphRag.Neo4j\ManagedCode.GraphRag.Neo4j.csproj" />
     <ProjectReference Include="..\..\src\ManagedCode.GraphRag.JanusGraph\ManagedCode.GraphRag.JanusGraph.csproj" />
     <ProjectReference Include="..\..\src\ManagedCode.GraphRag.Postgres\ManagedCode.GraphRag.Postgres.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
   </ItemGroup>
 
 </Project>

@@ -16,7 +16,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class ExtractGraphWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task ExtractGraphWorkflow_BuildsEntitiesAndRelationships()
     {
         const string payload =
@@ -64,15 +64,16 @@ public sealed class ExtractGraphWorkflowTests
         await workflow(new GraphRagConfig(), context, CancellationToken.None);
 
         var entities = await outputStorage.LoadTableAsync<EntityRecord>(PipelineTableNames.Entities);
-        Assert.Equal(2, entities.Count);
-        Assert.Contains(entities, entity => entity.Title == "Alice" && entity.Description?.Contains("Researcher") == true);
+        await Assert.That(entities.Count).IsEqualTo(2);
+        await Assert.That(entities.Any(entity => entity.Title == "Alice" && entity.Description?.Contains("Researcher") == true)).IsTrue();
 
         var relationships = await outputStorage.LoadTableAsync<RelationshipRecord>(PipelineTableNames.Relationships);
-        var rel = Assert.Single(relationships);
-        Assert.Equal("Alice", rel.Source);
-        Assert.Equal("Bob", rel.Target);
-        Assert.Equal("collaborates_with", rel.Type);
-        Assert.True(rel.Bidirectional);
-        Assert.Contains("unit-1", rel.TextUnitIds);
+        await Assert.That(relationships).HasSingleItem();
+        var rel = relationships.Single();
+        await Assert.That(rel.Source).IsEqualTo("Alice");
+        await Assert.That(rel.Target).IsEqualTo("Bob");
+        await Assert.That(rel.Type).IsEqualTo("collaborates_with");
+        await Assert.That(rel.Bidirectional).IsTrue();
+        await Assert.That(rel.TextUnitIds).Contains("unit-1");
     }
 }

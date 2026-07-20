@@ -15,8 +15,8 @@ public sealed class TokenTextChunkerTests
         EncodingModel = TokenizerDefaults.DefaultEncoding
     };
 
-    [Fact]
-    public void Chunk_RespectsTokenBudget()
+    [Test]
+    public async Task Chunk_RespectsTokenBudget()
     {
         var tokenizer = TokenizerRegistry.GetTokenizer(TokenizerDefaults.DefaultEncoding);
         const string baseSentence = "Alice met Bob at the conference and shared insights.";
@@ -33,22 +33,22 @@ public sealed class TokenTextChunkerTests
         var totalTokens = tokenizer.EncodeToIds(text).Count;
         var chunks = _chunker.Chunk(slices, config);
 
-        Assert.NotEmpty(chunks);
-        Assert.All(chunks, chunk =>
+        await Assert.That(chunks).IsNotEmpty();
+        foreach (var chunk in chunks)
         {
-            Assert.Contains("doc-1", chunk.DocumentIds);
-            Assert.True(chunk.TokenCount <= config.Size);
-            Assert.False(string.IsNullOrWhiteSpace(chunk.Text));
-        });
+            await Assert.That(chunk.DocumentIds).Contains("doc-1");
+            await Assert.That(chunk.TokenCount <= config.Size).IsTrue();
+            await Assert.That(string.IsNullOrWhiteSpace(chunk.Text)).IsFalse();
+        }
 
         if (totalTokens > config.Size)
         {
-            Assert.True(chunks.Count > 1, "Expected multiple chunks when total tokens exceed configured size.");
+            await Assert.That(chunks.Count > 1).IsTrue();
         }
     }
 
-    [Fact]
-    public void Chunk_CombinesDocumentIdentifiersAcrossSlices()
+    [Test]
+    public async Task Chunk_CombinesDocumentIdentifiersAcrossSlices()
     {
         var slices = new[]
         {
@@ -65,13 +65,13 @@ public sealed class TokenTextChunkerTests
 
         var chunks = _chunker.Chunk(slices, config);
 
-        Assert.NotEmpty(chunks);
-        Assert.Contains(chunks, chunk => chunk.DocumentIds.Contains("doc-1"));
-        Assert.Contains(chunks, chunk => chunk.DocumentIds.Contains("doc-2"));
+        await Assert.That(chunks).IsNotEmpty();
+        await Assert.That(chunks.Any(chunk => chunk.DocumentIds.Contains("doc-1"))).IsTrue();
+        await Assert.That(chunks.Any(chunk => chunk.DocumentIds.Contains("doc-2"))).IsTrue();
     }
 
-    [Fact]
-    public void Chunk_OverlapProducesSharedTokensBetweenAdjacentChunks()
+    [Test]
+    public async Task Chunk_OverlapProducesSharedTokensBetweenAdjacentChunks()
     {
         var tokenizer = TokenizerRegistry.GetTokenizer(TokenizerDefaults.DefaultEncoding);
         const string text = "The quick brown fox jumps over the lazy dog and continues running through the forest until it reaches the river where it stops to drink some water.";
@@ -86,7 +86,7 @@ public sealed class TokenTextChunkerTests
 
         var chunks = _chunker.Chunk(slices, config);
 
-        Assert.True(chunks.Count >= 2, "Need at least 2 chunks to verify overlap");
+        await Assert.That(chunks.Count >= 2).IsTrue();
 
         for (var i = 0; i < chunks.Count - 1; i++)
         {
@@ -96,46 +96,46 @@ public sealed class TokenTextChunkerTests
             var lastTokensOfCurrent = currentChunkTokens.TakeLast(config.Overlap).ToArray();
             var firstTokensOfNext = nextChunkTokens.Take(config.Overlap).ToArray();
 
-            Assert.Equal(lastTokensOfCurrent, firstTokensOfNext);
+            await Assert.That(firstTokensOfNext).IsEquivalentTo(lastTokensOfCurrent);
         }
     }
 
-    [Fact]
-    public void Chunk_EmptySlicesReturnsEmptyResult()
+    [Test]
+    public async Task Chunk_EmptySlicesReturnsEmptyResult()
     {
         var slices = Array.Empty<ChunkSlice>();
 
         var chunks = _chunker.Chunk(slices, _defaultConfig);
 
-        Assert.Empty(chunks);
+        await Assert.That(chunks).IsEmpty();
     }
 
-    [Fact]
-    public void Chunk_SlicesWithEmptyTextReturnsEmptyResult()
+    [Test]
+    public async Task Chunk_SlicesWithEmptyTextReturnsEmptyResult()
     {
         var slices = new[] { new ChunkSlice("doc-1", string.Empty) };
 
         var chunks = _chunker.Chunk(slices, _defaultConfig);
 
-        Assert.Empty(chunks);
+        await Assert.That(chunks).IsEmpty();
     }
 
-    [Fact]
-    public void Chunk_NullSlicesThrowsArgumentNullException()
+    [Test]
+    public async Task Chunk_NullSlicesThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => _chunker.Chunk(null!, _defaultConfig));
+        await Assert.That(() => _chunker.Chunk(null!, _defaultConfig)).Throws<ArgumentNullException>();
     }
 
-    [Fact]
-    public void Chunk_NullConfigThrowsArgumentNullException()
+    [Test]
+    public async Task Chunk_NullConfigThrowsArgumentNullException()
     {
         var slices = new[] { new ChunkSlice("doc-1", "Some text") };
 
-        Assert.Throws<ArgumentNullException>(() => _chunker.Chunk(slices, null!));
+        await Assert.That(() => _chunker.Chunk(slices, null!)).Throws<ArgumentNullException>();
     }
 
-    [Fact]
-    public void Chunk_ZeroOverlapProducesNonOverlappingChunks()
+    [Test]
+    public async Task Chunk_ZeroOverlapProducesNonOverlappingChunks()
     {
         var tokenizer = TokenizerRegistry.GetTokenizer(TokenizerDefaults.DefaultEncoding);
         const string text = "The quick brown fox jumps over the lazy dog and continues running through the forest until it reaches the river.";
@@ -149,7 +149,7 @@ public sealed class TokenTextChunkerTests
         };
 
         var chunks = _chunker.Chunk(slices, config);
-        Assert.True(chunks.Count >= 2, "Need at least 2 chunks to verify zero overlap");
+        await Assert.That(chunks.Count >= 2).IsTrue();
 
         var allChunkTokens = chunks
             .SelectMany(c => tokenizer.EncodeToIds(c.Text))
@@ -157,11 +157,11 @@ public sealed class TokenTextChunkerTests
 
         var originalTokens = tokenizer.EncodeToIds(text);
 
-        Assert.Equal(originalTokens.Count, allChunkTokens.Count);
+        await Assert.That(allChunkTokens.Count).IsEqualTo(originalTokens.Count);
     }
 
-    [Fact]
-    public void Chunk_InputSmallerThanChunkSizeReturnsSingleChunk()
+    [Test]
+    public async Task Chunk_InputSmallerThanChunkSizeReturnsSingleChunk()
     {
         const string shortText = "Hello world";
         var slices = new[] { new ChunkSlice("doc-1", shortText) };
@@ -175,12 +175,12 @@ public sealed class TokenTextChunkerTests
 
         var chunks = _chunker.Chunk(slices, config);
 
-        Assert.Single(chunks);
-        Assert.Equal(shortText, chunks[0].Text);
+        await Assert.That(chunks).HasSingleItem();
+        await Assert.That(chunks[0].Text).IsEqualTo(shortText);
     }
 
-    [Fact]
-    public void Chunk_ExactBoundaryProducesExpectedChunkCount()
+    [Test]
+    public async Task Chunk_ExactBoundaryProducesExpectedChunkCount()
     {
         var tokenizer = TokenizerRegistry.GetTokenizer(TokenizerDefaults.DefaultEncoding);
 
@@ -204,7 +204,10 @@ public sealed class TokenTextChunkerTests
 
         var chunks = _chunker.Chunk(slices, config);
 
-        Assert.True(chunks.Count >= 2, "Should produce multiple chunks");
-        Assert.All(chunks.SkipLast(1), chunk => Assert.Equal(chunkSize, chunk.TokenCount));
+        await Assert.That(chunks.Count >= 2).IsTrue();
+        foreach (var chunk in chunks.SkipLast(1))
+        {
+            await Assert.That(chunk.TokenCount).IsEqualTo(chunkSize);
+        }
     }
 }

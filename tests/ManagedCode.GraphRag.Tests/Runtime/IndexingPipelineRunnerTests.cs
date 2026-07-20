@@ -9,7 +9,7 @@ namespace ManagedCode.GraphRag.Tests.Runtime;
 
 public sealed class IndexingPipelineRunnerTests
 {
-    [Fact]
+    [Test]
     public async Task RunAsync_ExecutesPipelineAndReturnsResults()
     {
         var services = new ServiceCollection().BuildServiceProvider();
@@ -39,10 +39,10 @@ public sealed class IndexingPipelineRunnerTests
 
         var results = await runner.RunAsync(config);
 
-        Assert.Single(results);
-        Assert.Equal("completed", results[0].Result);
-        Assert.Single(capturedContexts);
-        Assert.IsType<MemoryPipelineStorage>(capturedContexts[0].InputStorage);
+        await Assert.That(results).HasSingleItem();
+        await Assert.That(results[0].Result).IsEqualTo("completed");
+        await Assert.That(capturedContexts).HasSingleItem();
+        await Assert.That(capturedContexts[0].InputStorage).IsTypeOf<MemoryPipelineStorage>();
     }
 
     private sealed class StubPipelineFactory(WorkflowDelegate step) : IPipelineFactory

@@ -8,8 +8,8 @@ namespace ManagedCode.GraphRag.Tests.Runtime;
 
 public sealed class PipelineContextFactoryTests
 {
-    [Fact]
-    public void Create_UsesProvidedComponents()
+    [Test]
+    public async Task Create_UsesProvidedComponents()
     {
         var input = new MemoryPipelineStorage();
         var output = new MemoryPipelineStorage();
@@ -21,19 +21,19 @@ public sealed class PipelineContextFactoryTests
         var services = new ServiceCollection().BuildServiceProvider();
         var context = PipelineContextFactory.Create(input, output, previous, cache, callbacks, stats, state, services, new Dictionary<string, object?> { ["flag"] = true });
 
-        Assert.Same(input, context.InputStorage);
-        Assert.Same(cache, context.Cache);
-        Assert.Equal(true, context.Items?["flag"]);
+        await Assert.That(context.InputStorage).IsSameReferenceAs(input);
+        await Assert.That(context.Cache).IsSameReferenceAs(cache);
+        await Assert.That((bool)context.Items["flag"]!).IsTrue();
     }
 
-    [Fact]
-    public void Create_ProvidesDefaultsWhenNull()
+    [Test]
+    public async Task Create_ProvidesDefaultsWhenNull()
     {
         var context = PipelineContextFactory.Create();
 
-        Assert.IsType<MemoryPipelineStorage>(context.InputStorage);
-        Assert.Null(context.Cache);
-        Assert.NotNull(context.Services);
+        await Assert.That(context.InputStorage).IsTypeOf<MemoryPipelineStorage>();
+        await Assert.That(context.Cache).IsNull();
+        await Assert.That(context.Services).IsNotNull();
     }
 
     private static IWorkflowCallbacks WorkflowCallbacksManagerFactory() => new WorkflowCallbacksManager();

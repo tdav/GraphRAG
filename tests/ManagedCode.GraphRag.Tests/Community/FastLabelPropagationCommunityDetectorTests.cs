@@ -22,8 +22,8 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
     #region Edge Cases
 
-    [Fact]
-    public void AssignLabels_EmptyEntities_ReturnsEmptyDictionary()
+    [Test]
+    public async Task AssignLabels_EmptyEntities_ReturnsEmptyDictionary()
     {
         var entities = Array.Empty<EntityRecord>();
         var relationships = Array.Empty<RelationshipRecord>();
@@ -31,11 +31,11 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Empty(result);
+        await Assert.That(result).IsEmpty();
     }
 
-    [Fact]
-    public void AssignLabels_EmptyRelationships_ReturnsNodesSelfLabeled()
+    [Test]
+    public async Task AssignLabels_EmptyRelationships_ReturnsNodesSelfLabeled()
     {
         var entities = new[] { CreateEntity("A"), CreateEntity("B"), CreateEntity("C") };
         var relationships = Array.Empty<RelationshipRecord>();
@@ -43,14 +43,14 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(3, result.Count);
-        Assert.Equal("A", result["A"]);
-        Assert.Equal("B", result["B"]);
-        Assert.Equal("C", result["C"]);
+        await Assert.That(result.Count).IsEqualTo(3);
+        await Assert.That(result["A"]).IsEqualTo("A");
+        await Assert.That(result["B"]).IsEqualTo("B");
+        await Assert.That(result["C"]).IsEqualTo("C");
     }
 
-    [Fact]
-    public void AssignLabels_SingleNode_ReturnsSelfLabel()
+    [Test]
+    public async Task AssignLabels_SingleNode_ReturnsSelfLabel()
     {
         var entities = new[] { CreateEntity("Solo") };
         var relationships = Array.Empty<RelationshipRecord>();
@@ -58,46 +58,46 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Single(result);
-        Assert.Equal("Solo", result["Solo"]);
+        await Assert.That(result).HasSingleItem();
+        await Assert.That(result["Solo"]).IsEqualTo("Solo");
     }
 
-    [Fact]
-    public void AssignLabels_NullEntities_ThrowsArgumentNullException()
+    [Test]
+    public async Task AssignLabels_NullEntities_ThrowsArgumentNullException()
     {
         var relationships = Array.Empty<RelationshipRecord>();
         var config = CreateConfig();
 
-        Assert.Throws<ArgumentNullException>(() =>
-            FastLabelPropagationCommunityDetector.AssignLabels(null!, relationships, config));
+        await Assert.That(() =>
+            FastLabelPropagationCommunityDetector.AssignLabels(null!, relationships, config)).Throws<ArgumentNullException>();
     }
 
-    [Fact]
-    public void AssignLabels_NullRelationships_ThrowsArgumentNullException()
+    [Test]
+    public async Task AssignLabels_NullRelationships_ThrowsArgumentNullException()
     {
         var entities = Array.Empty<EntityRecord>();
         var config = CreateConfig();
 
-        Assert.Throws<ArgumentNullException>(() =>
-            FastLabelPropagationCommunityDetector.AssignLabels(entities, null!, config));
+        await Assert.That(() =>
+            FastLabelPropagationCommunityDetector.AssignLabels(entities, null!, config)).Throws<ArgumentNullException>();
     }
 
-    [Fact]
-    public void AssignLabels_NullConfig_ThrowsArgumentNullException()
+    [Test]
+    public async Task AssignLabels_NullConfig_ThrowsArgumentNullException()
     {
         var entities = Array.Empty<EntityRecord>();
         var relationships = Array.Empty<RelationshipRecord>();
 
-        Assert.Throws<ArgumentNullException>(() =>
-            FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, null!));
+        await Assert.That(() =>
+            FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, null!)).Throws<ArgumentNullException>();
     }
 
     #endregion
 
     #region Deterministic Outcome Tests
 
-    [Fact]
-    public void AssignLabels_TwoConnectedNodes_AssignsSameLabel()
+    [Test]
+    public async Task AssignLabels_TwoConnectedNodes_AssignsSameLabel()
     {
         var entities = new[] { CreateEntity("A"), CreateEntity("B") };
         var relationships = new[] { CreateRelationship("A", "B") };
@@ -105,12 +105,12 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(2, result.Count);
-        Assert.Equal(result["A"], result["B"]);
+        await Assert.That(result.Count).IsEqualTo(2);
+        await Assert.That(result["B"]).IsEqualTo(result["A"]);
     }
 
-    [Fact]
-    public void AssignLabels_ThreeNodeChain_ConvergesToSameLabel()
+    [Test]
+    public async Task AssignLabels_ThreeNodeChain_ConvergesToSameLabel()
     {
         // A -- B -- C (chain topology)
         var entities = new[] { CreateEntity("A"), CreateEntity("B"), CreateEntity("C") };
@@ -123,13 +123,13 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(3, result.Count);
+        await Assert.That(result.Count).IsEqualTo(3);
         var uniqueLabels = result.Values.Distinct().ToList();
-        Assert.Single(uniqueLabels);
+        await Assert.That(uniqueLabels).HasSingleItem();
     }
 
-    [Fact]
-    public void AssignLabels_TwoDisconnectedComponents_AssignsDifferentLabels()
+    [Test]
+    public async Task AssignLabels_TwoDisconnectedComponents_AssignsDifferentLabels()
     {
         // Component 1: A -- B
         // Component 2: C -- D
@@ -147,18 +147,18 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(4, result.Count);
+        await Assert.That(result.Count).IsEqualTo(4);
 
         // Nodes in same component should have same label
-        Assert.Equal(result["A"], result["B"]);
-        Assert.Equal(result["C"], result["D"]);
+        await Assert.That(result["B"]).IsEqualTo(result["A"]);
+        await Assert.That(result["D"]).IsEqualTo(result["C"]);
 
         // Nodes in different components should have different labels
-        Assert.NotEqual(result["A"], result["C"]);
+        await Assert.That(result["C"]).IsNotEqualTo(result["A"]);
     }
 
-    [Fact]
-    public void AssignLabels_StarTopology_AllNodesGetCenterLabel()
+    [Test]
+    public async Task AssignLabels_StarTopology_AllNodesGetCenterLabel()
     {
         // Star: Center connected to Leaf1, Leaf2, Leaf3
         var entities = new[]
@@ -178,13 +178,13 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(4, result.Count);
+        await Assert.That(result.Count).IsEqualTo(4);
         var uniqueLabels = result.Values.Distinct().ToList();
-        Assert.Single(uniqueLabels);
+        await Assert.That(uniqueLabels).HasSingleItem();
     }
 
-    [Fact]
-    public void AssignLabels_WeightedEdges_HigherWeightInfluencesResult()
+    [Test]
+    public async Task AssignLabels_WeightedEdges_HigherWeightInfluencesResult()
     {
         // B connects to A with high weight, C connects to A with low weight
         // B -- A -- C
@@ -204,18 +204,18 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(3, result.Count);
+        await Assert.That(result.Count).IsEqualTo(3);
         // All should converge to same community
         var uniqueLabels = result.Values.Distinct().ToList();
-        Assert.Single(uniqueLabels);
+        await Assert.That(uniqueLabels).HasSingleItem();
     }
 
     #endregion
 
     #region Property-Based Invariant Tests
 
-    [Fact]
-    public void AssignLabels_AllNodesGetLabel()
+    [Test]
+    public async Task AssignLabels_AllNodesGetLabel()
     {
         var entities = new[]
         {
@@ -236,12 +236,12 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         foreach (var entity in entities)
         {
-            Assert.True(result.ContainsKey(entity.Title), $"Entity '{entity.Title}' should have a label");
+            await Assert.That(result.ContainsKey(entity.Title)).IsTrue();
         }
     }
 
-    [Fact]
-    public void AssignLabels_LabelsAreValidNodeIds()
+    [Test]
+    public async Task AssignLabels_LabelsAreValidNodeIds()
     {
         var entities = new[]
         {
@@ -262,12 +262,12 @@ public sealed class FastLabelPropagationCommunityDetectorTests
         var validTitles = entities.Select(e => e.Title).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var label in result.Values)
         {
-            Assert.True(validTitles.Contains(label), $"Label '{label}' should be a valid node title");
+            await Assert.That(validTitles.Contains(label)).IsTrue();
         }
     }
 
-    [Fact]
-    public void AssignLabels_ConnectedNodesConverge_WithSufficientIterations()
+    [Test]
+    public async Task AssignLabels_ConnectedNodesConverge_WithSufficientIterations()
     {
         // Triangle: A -- B -- C -- A (all connected)
         var entities = new[]
@@ -287,15 +287,15 @@ public sealed class FastLabelPropagationCommunityDetectorTests
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
         var uniqueLabels = result.Values.Distinct().ToList();
-        Assert.Single(uniqueLabels);
+        await Assert.That(uniqueLabels).HasSingleItem();
     }
 
     #endregion
 
     #region Convergence Tests
 
-    [Fact]
-    public void AssignLabels_ConvergesBeforeMaxIterations_WhenStable()
+    [Test]
+    public async Task AssignLabels_ConvergesBeforeMaxIterations_WhenStable()
     {
         // Simple connected graph that should converge quickly
         var entities = new[] { CreateEntity("X"), CreateEntity("Y") };
@@ -304,12 +304,12 @@ public sealed class FastLabelPropagationCommunityDetectorTests
 
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
-        Assert.Equal(2, result.Count);
-        Assert.Equal(result["X"], result["Y"]);
+        await Assert.That(result.Count).IsEqualTo(2);
+        await Assert.That(result["Y"]).IsEqualTo(result["X"]);
     }
 
-    [Fact]
-    public void AssignLabels_MaxIterationsOne_StillProducesValidOutput()
+    [Test]
+    public async Task AssignLabels_MaxIterationsOne_StillProducesValidOutput()
     {
         var entities = new[]
         {
@@ -327,16 +327,16 @@ public sealed class FastLabelPropagationCommunityDetectorTests
         var result = FastLabelPropagationCommunityDetector.AssignLabels(entities, relationships, config);
 
         // Even with 1 iteration, all nodes should have labels
-        Assert.Equal(3, result.Count);
-        Assert.True(result.ContainsKey("P"));
-        Assert.True(result.ContainsKey("Q"));
-        Assert.True(result.ContainsKey("R"));
+        await Assert.That(result.Count).IsEqualTo(3);
+        await Assert.That(result.ContainsKey("P")).IsTrue();
+        await Assert.That(result.ContainsKey("Q")).IsTrue();
+        await Assert.That(result.ContainsKey("R")).IsTrue();
 
         // Labels should be valid node titles
         var validTitles = new HashSet<string>(["P", "Q", "R"], StringComparer.OrdinalIgnoreCase);
         foreach (var label in result.Values)
         {
-            Assert.Contains(label, validTitles);
+            await Assert.That(validTitles).Contains(label);
         }
     }
 

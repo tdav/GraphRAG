@@ -3,15 +3,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class GraphStoreConcurrencyTests(GraphRagApplicationFixture fixture)
 {
     private const int ParallelClients = 200;
 
     public static IEnumerable<object[]> Providers => GraphStoreTestProviders.ProviderKeysAndLabels;
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_HandleParallelClientsAsync(string providerKey, string label)
     {
         var store = fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -65,15 +65,15 @@ public sealed class GraphStoreConcurrencyTests(GraphRagApplicationFixture fixtur
         await Task.WhenAll(tasks);
 
         var nodes = await CollectNodesAsync(store, prefix);
-        Assert.Contains(nodes, node => node.Id == rootId);
+        await Assert.That(nodes).Contains(node => node.Id == rootId);
         var createdMainNodes = nodes.Count(node => node.Id.StartsWith($"{prefix}-node-", StringComparison.Ordinal));
-        Assert.Equal(ParallelClients, createdMainNodes);
+        await Assert.That(createdMainNodes).IsEqualTo(ParallelClients);
 
         var relationships = await CollectRelationshipsAsync(store, prefix, rootId);
         var concurrentEdges = relationships
             .Where(rel => rel.SourceId == rootId && rel.TargetId.StartsWith($"{prefix}-node-", StringComparison.Ordinal))
             .ToList();
-        Assert.Equal(ParallelClients, concurrentEdges.Count);
+        await Assert.That(concurrentEdges.Count).IsEqualTo(ParallelClients);
 
         var relationshipsToDelete = concurrentEdges
             .Where((_, index) => index % 3 == 0)
@@ -88,7 +88,8 @@ public sealed class GraphStoreConcurrencyTests(GraphRagApplicationFixture fixtur
         var outgoing = await CollectAsync(store.GetOutgoingRelationshipsAsync(rootId));
         foreach (var key in relationshipsToDelete)
         {
-            Assert.DoesNotContain(outgoing, rel => rel.SourceId == key.SourceId && rel.TargetId == key.TargetId && rel.Type == key.Type);
+            await Assert.That(outgoing)
+                .DoesNotContain(rel => rel.SourceId == key.SourceId && rel.TargetId == key.TargetId && rel.Type == key.Type);
         }
 
         var batchNodes = nodes
@@ -104,7 +105,7 @@ public sealed class GraphStoreConcurrencyTests(GraphRagApplicationFixture fixtur
         var remainingBatchNodes = await CollectNodesAsync(store, prefix);
         foreach (var removed in batchNodes)
         {
-            Assert.DoesNotContain(remainingBatchNodes, node => node.Id == removed);
+            await Assert.That(remainingBatchNodes).DoesNotContain(node => node.Id == removed);
         }
     }
 

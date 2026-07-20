@@ -3,15 +3,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class GraphStoreStressTests(GraphRagApplicationFixture fixture)
 {
     private const int ParallelOperations = 1500;
 
     public static IEnumerable<object[]> Providers => GraphStoreTestProviders.ProviderKeysAndLabels;
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_HandleParallelMutationsAsync(string providerKey, string label)
     {
         var graphStore = fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -77,7 +77,7 @@ public sealed class GraphStoreStressTests(GraphRagApplicationFixture fixture)
         }
 
         nodes.ExceptWith(excluded);
-        Assert.Equal(expectedCount, nodes.Count);
+        await Assert.That(nodes.Count).IsEqualTo(expectedCount);
     }
 
     private static async Task AssertRelationshipsFromRootAsync(IGraphStore graphStore, string rootId, string prefix, int expectedCount, params string[] excluded)
@@ -92,6 +92,6 @@ public sealed class GraphStoreStressTests(GraphRagApplicationFixture fixture)
         }
 
         relationships.ExceptWith(excluded);
-        Assert.Equal(expectedCount, relationships.Count);
+        await Assert.That(relationships.Count).IsEqualTo(expectedCount);
     }
 }

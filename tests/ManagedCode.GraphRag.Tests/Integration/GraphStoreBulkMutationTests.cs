@@ -3,15 +3,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class GraphStoreBulkMutationTests(GraphRagApplicationFixture fixture)
 {
     private readonly GraphRagApplicationFixture _fixture = fixture;
 
     public static IEnumerable<object[]> Providers => GraphStoreTestProviders.ProviderKeysAndLabels;
 
-    [Theory]
-    [MemberData(nameof(Providers))]
+    [Test]
+    [MethodDataSource(nameof(Providers))]
     public async Task GraphStores_HandleBulkInsertionAndDeletionAsync(string providerKey, string label)
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>(providerKey);
@@ -36,10 +36,10 @@ public sealed class GraphStoreBulkMutationTests(GraphRagApplicationFixture fixtu
         }
 
         var storedNodes = await CollectNodesAsync(store, prefix);
-        Assert.Equal(nodes.Count, storedNodes.Count);
+        await Assert.That(storedNodes.Count).IsEqualTo(nodes.Count);
 
         var storedRelationships = await CollectRelationshipsAsync(store, prefix);
-        Assert.Equal(relationships.Count, storedRelationships.Count);
+        await Assert.That(storedRelationships.Count).IsEqualTo(relationships.Count);
 
         var relationshipsToDelete = relationships
             .Where((_, index) => index % 2 == 0)
@@ -54,9 +54,8 @@ public sealed class GraphStoreBulkMutationTests(GraphRagApplicationFixture fixtu
         var remainingRelationships = await CollectRelationshipsAsync(store, prefix);
         foreach (var removed in relationshipsToDelete)
         {
-            Assert.DoesNotContain(
-                remainingRelationships,
-                rel => rel.SourceId == removed.SourceId && rel.TargetId == removed.TargetId && rel.Type == removed.Type);
+            await Assert.That(remainingRelationships)
+                .DoesNotContain(rel => rel.SourceId == removed.SourceId && rel.TargetId == removed.TargetId && rel.Type == removed.Type);
         }
 
         var nodeIds = nodes.Select(node => node.Id).ToList();
@@ -66,7 +65,7 @@ public sealed class GraphStoreBulkMutationTests(GraphRagApplicationFixture fixtu
         }
 
         var nodesAfterDelete = await CollectNodesAsync(store, prefix);
-        Assert.Empty(nodesAfterDelete);
+        await Assert.That(nodesAfterDelete).IsEmpty();
     }
 
     private static List<GraphNodeUpsert> CreateNodes(string prefix, string label, int count)

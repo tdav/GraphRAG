@@ -4,23 +4,23 @@ namespace ManagedCode.GraphRag.Tests.Storage;
 
 public sealed class PipelineStorageExtensionsTests
 {
-    [Fact]
+    [Test]
     public async Task WriteAndLoadTable_RoundTripsRecords()
     {
         var storage = new MemoryPipelineStorage();
         var records = new[] { new SampleRecord { Id = 1, Name = "Alice" } };
 
         await storage.WriteTableAsync("records", records);
-        Assert.True(await storage.TableExistsAsync("records"));
+        await Assert.That(await storage.TableExistsAsync("records")).IsTrue();
 
         var loaded = await storage.LoadTableAsync<SampleRecord>("records");
 
-        Assert.Single(loaded);
-        Assert.Equal(1, loaded[0].Id);
-        Assert.Equal("Alice", loaded[0].Name);
+        await Assert.That(loaded).HasSingleItem();
+        await Assert.That(loaded[0].Id).IsEqualTo(1);
+        await Assert.That(loaded[0].Name).IsEqualTo("Alice");
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteTableAsync_RemovesStoredData()
     {
         var storage = new MemoryPipelineStorage();
@@ -28,15 +28,15 @@ public sealed class PipelineStorageExtensionsTests
 
         await storage.DeleteTableAsync("records");
 
-        Assert.False(await storage.TableExistsAsync("records"));
+        await Assert.That(await storage.TableExistsAsync("records")).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task LoadTableAsync_ThrowsWhenMissing()
     {
         var storage = new MemoryPipelineStorage();
-        var exception = await Assert.ThrowsAsync<FileNotFoundException>(() => storage.LoadTableAsync<SampleRecord>("missing"));
-        Assert.Contains("missing", exception.Message, StringComparison.Ordinal);
+        var exception = await Assert.That(async () => { await storage.LoadTableAsync<SampleRecord>("missing"); }).Throws<FileNotFoundException>();
+        await Assert.That(exception!.Message).Contains("missing");
     }
 
     private sealed record SampleRecord

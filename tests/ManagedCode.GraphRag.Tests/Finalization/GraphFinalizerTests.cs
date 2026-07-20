@@ -6,8 +6,8 @@ namespace ManagedCode.GraphRag.Tests.Finalization;
 
 public sealed class GraphFinalizerTests
 {
-    [Fact]
-    public void Finalize_ComputesDegreesWithoutLayout()
+    [Test]
+    public async Task Finalize_ComputesDegreesWithoutLayout()
     {
         var entities = new[]
         {
@@ -22,18 +22,19 @@ public sealed class GraphFinalizerTests
 
         var result = GraphFinalizer.Finalize(entities, relationships, new GraphFinalizerOptions(LayoutEnabled: false));
 
-        Assert.Equal(2, result.Entities.Count);
+        await Assert.That(result.Entities.Count).IsEqualTo(2);
         var alice = result.Entities.Single(e => e.Title == "Alice");
-        Assert.Equal(1, alice.Degree);
-        Assert.Equal(0d, alice.X);
-        Assert.Equal(0d, alice.Y);
+        await Assert.That(alice.Degree).IsEqualTo(1);
+        await Assert.That(alice.X).IsEqualTo(0d);
+        await Assert.That(alice.Y).IsEqualTo(0d);
 
-        var relationship = Assert.Single(result.Relationships);
-        Assert.Equal(2, relationship.CombinedDegree);
+        await Assert.That(result.Relationships).HasSingleItem();
+        var relationship = result.Relationships.Single();
+        await Assert.That(relationship.CombinedDegree).IsEqualTo(2);
     }
 
-    [Fact]
-    public void Finalize_ComputesLayoutWhenEnabled()
+    [Test]
+    public async Task Finalize_ComputesLayoutWhenEnabled()
     {
         var entities = new[]
         {
@@ -44,6 +45,6 @@ public sealed class GraphFinalizerTests
 
         var result = GraphFinalizer.Finalize(entities, Array.Empty<RelationshipSeed>(), new GraphFinalizerOptions(LayoutEnabled: true));
 
-        Assert.Contains(result.Entities, e => Math.Abs(e.X) > 0.001 || Math.Abs(e.Y) > 0.001);
+        await Assert.That(result.Entities.Any(e => Math.Abs(e.X) > 0.001 || Math.Abs(e.Y) > 0.001)).IsTrue();
     }
 }

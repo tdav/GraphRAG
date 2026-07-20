@@ -5,21 +5,21 @@ namespace ManagedCode.GraphRag.Tests.Config;
 
 public sealed class PostgresGraphRagConfigExtensionsTests
 {
-    [Fact]
-    public void GetPostgresGraphStores_ReturnsMutableDictionary()
+    [Test]
+    public async Task GetPostgresGraphStores_ReturnsMutableDictionary()
     {
         var config = new GraphRagConfig();
         var stores = config.GetPostgresGraphStores();
-        Assert.Empty(stores);
+        await Assert.That(stores).IsEmpty();
 
         stores["primary"] = new PostgresGraphStoreConfig { ConnectionString = "Host=localhost", GraphName = "g" };
 
         var replay = config.GetPostgresGraphStores();
-        Assert.Equal("g", replay["primary"].GraphName);
+        await Assert.That(replay["primary"].GraphName).IsEqualTo("g");
     }
 
-    [Fact]
-    public void SetPostgresGraphStores_ReplacesExisting()
+    [Test]
+    public async Task SetPostgresGraphStores_ReplacesExisting()
     {
         var config = new GraphRagConfig();
         var initial = new Dictionary<string, PostgresGraphStoreConfig>
@@ -29,9 +29,9 @@ public sealed class PostgresGraphRagConfigExtensionsTests
 
         config.SetPostgresGraphStores(initial);
         var stores = config.GetPostgresGraphStores();
-        Assert.Equal("g", stores["default"].GraphName);
+        await Assert.That(stores["default"].GraphName).IsEqualTo("g");
 
         config.SetPostgresGraphStores(null!);
-        Assert.Empty(config.GetPostgresGraphStores());
+        await Assert.That(config.GetPostgresGraphStores()).IsEmpty();
     }
 }

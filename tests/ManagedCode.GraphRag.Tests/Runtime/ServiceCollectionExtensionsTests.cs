@@ -11,8 +11,8 @@ namespace ManagedCode.GraphRag.Tests.Runtime;
 
 public sealed class ServiceCollectionExtensionsTests
 {
-    [Fact]
-    public void AddGraphRag_RegistersCoreServices()
+    [Test]
+    public async Task AddGraphRag_RegistersCoreServices()
     {
         var services = new ServiceCollection();
         services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
@@ -20,7 +20,7 @@ public sealed class ServiceCollectionExtensionsTests
         services.AddGraphRag();
         using var provider = services.BuildServiceProvider();
 
-        Assert.NotNull(provider.GetRequiredService<IChunkerResolver>());
-        Assert.NotNull(provider.GetRequiredService<PipelineExecutor>());
+        await Assert.That(provider.GetRequiredService<IChunkerResolver>()).IsNotNull();
+        await Assert.That(provider.GetRequiredService<PipelineExecutor>()).IsNotNull();
     }
 }

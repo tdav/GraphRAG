@@ -6,29 +6,29 @@ namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
 public sealed class GraphPrimitiveTests
 {
-    [Fact]
-    public void GraphId_ComparesAndFormats()
+    [Test]
+    public async Task GraphId_ComparesAndFormats()
     {
         var a = new GraphId(10);
         var b = new GraphId(20);
 
-        Assert.True(a < b);
-        Assert.True(b > a);
-        Assert.True(a <= b);
-        Assert.True(b >= a);
-        Assert.Equal("10", a.ToString());
+        await Assert.That(a < b).IsTrue();
+        await Assert.That(b > a).IsTrue();
+        await Assert.That(a <= b).IsTrue();
+        await Assert.That(b >= a).IsTrue();
+        await Assert.That(a.ToString()).IsEqualTo("10");
 
-        Assert.Equal(0, a.CompareTo(a));
-        Assert.Equal(-1, a.CompareTo(b));
-        Assert.Equal(1, b.CompareTo(a));
+        await Assert.That(a.CompareTo(a)).IsEqualTo(0);
+        await Assert.That(a.CompareTo(b)).IsEqualTo(-1);
+        await Assert.That(b.CompareTo(a)).IsEqualTo(1);
 
-        Assert.True(a == new GraphId(10));
-        Assert.True(a != b);
-        Assert.Throws<ArgumentException>(() => a.CompareTo("not-a-graph-id"));
+        await Assert.That(a == new GraphId(10)).IsTrue();
+        await Assert.That(a != b).IsTrue();
+        await Assert.That(() => a.CompareTo("not-a-graph-id")).Throws<ArgumentException>();
     }
 
-    [Fact]
-    public void Vertex_ToStringIncludesProperties()
+    [Test]
+    public async Task Vertex_ToStringIncludesProperties()
     {
         var vertex = new Vertex
         {
@@ -38,15 +38,15 @@ public sealed class GraphPrimitiveTests
         };
 
         var representation = vertex.ToString();
-        Assert.Contains(@"""label"": ""Entity""", representation);
-        Assert.Equal(vertex, vertex);
+        await Assert.That(representation).Contains(@"""label"": ""Entity""");
+        await Assert.That(vertex).IsEqualTo(vertex);
         var clone = vertex;
-        Assert.True(vertex == clone);
-        Assert.False(vertex != clone);
+        await Assert.That(vertex == clone).IsTrue();
+        await Assert.That(vertex != clone).IsFalse();
     }
 
-    [Fact]
-    public void Edge_ToStringIncludesEndpoints()
+    [Test]
+    public async Task Edge_ToStringIncludesEndpoints()
     {
         var edge = new Edge
         {
@@ -58,15 +58,15 @@ public sealed class GraphPrimitiveTests
         };
 
         var representation = edge.ToString();
-        Assert.Contains(@"""start_id"": 1", representation);
-        Assert.Contains(@"""end_id"": 2", representation);
+        await Assert.That(representation).Contains(@"""start_id"": 1");
+        await Assert.That(representation).Contains(@"""end_id"": 2");
         var clonedEdge = edge;
-        Assert.True(edge == clonedEdge);
-        Assert.False(edge != clonedEdge);
+        await Assert.That(edge == clonedEdge).IsTrue();
+        await Assert.That(edge != clonedEdge).IsFalse();
     }
 
-    [Fact]
-    public void Path_ConstructsFromVertexAndEdgeSequence()
+    [Test]
+    public async Task Path_ConstructsFromVertexAndEdgeSequence()
     {
         var vertices = new[]
         {
@@ -87,18 +87,18 @@ public sealed class GraphPrimitiveTests
             binder: null,
             types: new[] { typeof(object[]) },
             modifiers: null);
-        Assert.NotNull(ctor);
+        await Assert.That(ctor).IsNotNull();
         var path = (GraphPath)ctor!.Invoke(new object[] { rawPath });
 
-        Assert.Equal(2, path.Length);
-        Assert.Equal(3, path.Vertices.Length);
-        Assert.Equal(2, path.Edges.Length);
-        Assert.Equal(vertices[2].Id, path.Vertices[^1].Id);
-        Assert.Equal(edges[1].Id, path.Edges[^1].Id);
+        await Assert.That(path.Length).IsEqualTo(2);
+        await Assert.That(path.Vertices.Length).IsEqualTo(3);
+        await Assert.That(path.Edges.Length).IsEqualTo(2);
+        await Assert.That(path.Vertices[^1].Id).IsEqualTo(vertices[2].Id);
+        await Assert.That(path.Edges[^1].Id).IsEqualTo(edges[1].Id);
     }
 
-    [Fact]
-    public void Path_InvalidSequenceThrows()
+    [Test]
+    public async Task Path_InvalidSequenceThrows()
     {
         var rawPath = new object[] { new Edge() };
         var ctor = typeof(GraphPath).GetConstructor(
@@ -106,8 +106,8 @@ public sealed class GraphPrimitiveTests
             binder: null,
             types: new[] { typeof(object[]) },
             modifiers: null);
-        Assert.NotNull(ctor);
-        Assert.Throws<FormatException>(() =>
+        await Assert.That(ctor).IsNotNull();
+        await Assert.That(() =>
         {
             try
             {
@@ -117,6 +117,6 @@ public sealed class GraphPrimitiveTests
             {
                 throw ex.InnerException;
             }
-        });
+        }).Throws<FormatException>();
     }
 }

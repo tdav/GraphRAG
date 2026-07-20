@@ -14,7 +14,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class CreateFinalDocumentsWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task RunWorkflow_AssignsTextUnitIds()
     {
         var services = new ServiceCollection()
@@ -62,8 +62,8 @@ public sealed class CreateFinalDocumentsWorkflowTests
         await workflow(new GraphRagConfig(), context, CancellationToken.None);
 
         var documents = await outputStorage.LoadTableAsync<DocumentRecord>(PipelineTableNames.Documents);
-        Assert.Single(documents);
-        Assert.Contains("chunk-1", documents[0].TextUnitIds);
-        Assert.Equal(0, documents[0].HumanReadableId);
+        await Assert.That(documents).HasSingleItem();
+        await Assert.That(documents[0].TextUnitIds).Contains("chunk-1");
+        await Assert.That(documents[0].HumanReadableId).IsEqualTo(0);
     }
 }

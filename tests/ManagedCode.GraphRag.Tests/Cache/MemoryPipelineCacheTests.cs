@@ -7,7 +7,7 @@ namespace ManagedCode.GraphRag.Tests.Cache;
 
 public sealed class MemoryPipelineCacheTests
 {
-    [Fact]
+    [Test]
     public async Task SetAndGet_ReturnsStoredValue()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -16,11 +16,11 @@ public sealed class MemoryPipelineCacheTests
         await cache.SetAsync("foo", 42);
         var value = await cache.GetAsync("foo");
 
-        Assert.Equal(42, value);
-        Assert.True(await cache.HasAsync("foo"));
+        await Assert.That(value).IsEqualTo(42);
+        await Assert.That(await cache.HasAsync("foo")).IsTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task ClearAsync_RemovesEntries()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -29,10 +29,10 @@ public sealed class MemoryPipelineCacheTests
         await cache.SetAsync("foo", "bar");
         await cache.ClearAsync();
 
-        Assert.False(await cache.HasAsync("foo"));
+        await Assert.That(await cache.HasAsync("foo")).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task ChildCache_IsolatedFromParent()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -41,11 +41,11 @@ public sealed class MemoryPipelineCacheTests
 
         await child.SetAsync("value", "child");
 
-        Assert.False(await parent.HasAsync("value"));
-        Assert.Equal("child", await child.GetAsync("value"));
+        await Assert.That(await parent.HasAsync("value")).IsFalse();
+        await Assert.That(await child.GetAsync("value")).IsEqualTo("child");
     }
 
-    [Fact]
+    [Test]
     public async Task ClearAsync_RemovesChildEntries()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -57,11 +57,11 @@ public sealed class MemoryPipelineCacheTests
 
         await parent.ClearAsync();
 
-        Assert.False(await parent.HasAsync("parentValue"));
-        Assert.False(await child.HasAsync("childValue"));
+        await Assert.That(await parent.HasAsync("parentValue")).IsFalse();
+        await Assert.That(await child.HasAsync("childValue")).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteAsync_RemovesTrackedKeyEvenWithDebugData()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -69,15 +69,15 @@ public sealed class MemoryPipelineCacheTests
 
         await cache.SetAsync("debug", 123, new Dictionary<string, object?> { ["token"] = "value" });
         var keys = GetTrackedKeys(cache);
-        Assert.Contains(keys.Keys, key => key.EndsWith(":debug", StringComparison.Ordinal));
+        await Assert.That(keys.Keys.Any(key => key.EndsWith(":debug", StringComparison.Ordinal))).IsTrue();
 
         await cache.DeleteAsync("debug");
 
-        Assert.DoesNotContain(GetTrackedKeys(cache).Keys, key => key.EndsWith(":debug", StringComparison.Ordinal));
-        Assert.False(await cache.HasAsync("debug"));
+        await Assert.That(GetTrackedKeys(cache).Keys.Any(key => key.EndsWith(":debug", StringComparison.Ordinal))).IsFalse();
+        await Assert.That(await cache.HasAsync("debug")).IsFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task CreateChild_AfterParentWrites_StillClearsChildEntries()
     {
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -89,8 +89,8 @@ public sealed class MemoryPipelineCacheTests
 
         await parent.ClearAsync();
 
-        Assert.False(await parent.HasAsync("root"));
-        Assert.False(await child.HasAsync("inner"));
+        await Assert.That(await parent.HasAsync("root")).IsFalse();
+        await Assert.That(await child.HasAsync("inner")).IsFalse();
     }
 
     private static ConcurrentDictionary<string, byte> GetTrackedKeys(MemoryPipelineCache cache)

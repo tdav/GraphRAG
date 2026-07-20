@@ -4,21 +4,21 @@ namespace ManagedCode.GraphRag.Tests.Utils;
 
 public class HashingTests
 {
-    [Fact]
-    public void GenerateSha512Hash_WithSingleProperty_ReturnsConsistentHash()
+    [Test]
+    public async Task GenerateSha512Hash_WithSingleProperty_ReturnsConsistentHash()
     {
         var fields = new[] { new KeyValuePair<string, object?>("id", "entity-123") };
 
         var hash1 = Hashing.GenerateSha512Hash(fields);
         var hash2 = Hashing.GenerateSha512Hash(fields);
 
-        Assert.Equal(hash1, hash2);
-        Assert.Equal(128, hash1.Length);  // SHA512 = 64 bytes = 128 hex chars
-        Assert.True(hash1.All(c => char.IsAsciiHexDigitLower(c) || char.IsDigit(c)));
+        await Assert.That(hash2).IsEqualTo(hash1);
+        await Assert.That(hash1.Length).IsEqualTo(128); // SHA512 = 64 bytes = 128 hex chars
+        await Assert.That(hash1.All(c => char.IsAsciiHexDigitLower(c) || char.IsDigit(c))).IsTrue();
     }
 
-    [Fact]
-    public void GenerateSha512Hash_WithMultipleProperties_ReturnsConsistentHash()
+    [Test]
+    public async Task GenerateSha512Hash_WithMultipleProperties_ReturnsConsistentHash()
     {
         var fields = new[]
         {
@@ -30,52 +30,52 @@ public class HashingTests
         var hash1 = Hashing.GenerateSha512Hash(fields);
         var hash2 = Hashing.GenerateSha512Hash(fields);
 
-        Assert.Equal(hash1, hash2);
+        await Assert.That(hash2).IsEqualTo(hash1);
     }
 
-    [Fact]
-    public void GenerateSha512Hash_WithEmptyValue_HandlesCorrectly()
+    [Test]
+    public async Task GenerateSha512Hash_WithEmptyValue_HandlesCorrectly()
     {
         var fields = new[] { new KeyValuePair<string, object?>("empty", "") };
 
         var hash = Hashing.GenerateSha512Hash(fields);
 
-        Assert.NotEmpty(hash);
+        await Assert.That(hash).IsNotEmpty();
     }
 
-    [Fact]
-    public void GenerateSha512Hash_WithNullValue_HandlesCorrectly()
+    [Test]
+    public async Task GenerateSha512Hash_WithNullValue_HandlesCorrectly()
     {
         var fields = new[] { new KeyValuePair<string, object?>("nullable", null) };
 
         var hash = Hashing.GenerateSha512Hash(fields);
 
-        Assert.NotEmpty(hash);
+        await Assert.That(hash).IsNotEmpty();
     }
 
-    [Fact]
-    public void GenerateSha512Hash_WithUnicodeValue_HandlesCorrectly()
+    [Test]
+    public async Task GenerateSha512Hash_WithUnicodeValue_HandlesCorrectly()
     {
         var fields = new[] { new KeyValuePair<string, object?>("unicode", "日本語🎉émoji") };
 
         var hash = Hashing.GenerateSha512Hash(fields);
 
-        Assert.Equal(128, hash.Length);
+        await Assert.That(hash.Length).IsEqualTo(128);
     }
 
-    [Fact]
-    public void GenerateSha512Hash_WithLargeValue_HandlesCorrectly()
+    [Test]
+    public async Task GenerateSha512Hash_WithLargeValue_HandlesCorrectly()
     {
         var largeValue = new string('x', 10_000);
         var fields = new[] { new KeyValuePair<string, object?>("large", largeValue) };
 
         var hash = Hashing.GenerateSha512Hash(fields);
 
-        Assert.Equal(128, hash.Length);
+        await Assert.That(hash.Length).IsEqualTo(128);
     }
 
-    [Fact]
-    public void GenerateSha512Hash_DifferentInputs_ProduceDifferentHashes()
+    [Test]
+    public async Task GenerateSha512Hash_DifferentInputs_ProduceDifferentHashes()
     {
         var fields1 = new[] { new KeyValuePair<string, object?>("id", "1") };
         var fields2 = new[] { new KeyValuePair<string, object?>("id", "2") };
@@ -83,11 +83,11 @@ public class HashingTests
         var hash1 = Hashing.GenerateSha512Hash(fields1);
         var hash2 = Hashing.GenerateSha512Hash(fields2);
 
-        Assert.NotEqual(hash1, hash2);
+        await Assert.That(hash2).IsNotEqualTo(hash1);
     }
 
-    [Fact]
-    public void GenerateSha512Hash_PropertyOrderMatters()
+    [Test]
+    public async Task GenerateSha512Hash_PropertyOrderMatters()
     {
         var fields1 = new[]
         {
@@ -103,11 +103,11 @@ public class HashingTests
         var hash1 = Hashing.GenerateSha512Hash(fields1);
         var hash2 = Hashing.GenerateSha512Hash(fields2);
 
-        Assert.NotEqual(hash1, hash2);
+        await Assert.That(hash2).IsNotEqualTo(hash1);
     }
 
-    [Fact]
-    public void GenerateSha512Hash_TuplesOverload_MatchesKeyValuePairOverload()
+    [Test]
+    public async Task GenerateSha512Hash_TuplesOverload_MatchesKeyValuePairOverload()
     {
         var kvpHash = Hashing.GenerateSha512Hash([
             new KeyValuePair<string, object?>("id", "123"),
@@ -118,6 +118,6 @@ public class HashingTests
             ("id", (object?)"123"),
             ("name", (object?)"Test"));
 
-        Assert.Equal(kvpHash, tupleHash);
+        await Assert.That(tupleHash).IsEqualTo(kvpHash);
     }
 }

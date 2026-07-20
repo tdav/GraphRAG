@@ -11,7 +11,7 @@ namespace ManagedCode.GraphRag.Tests.Runtime;
 
 public sealed class PipelineExecutorTests
 {
-    [Fact]
+    [Test]
     public async Task ExecuteAsync_StopsOnException()
     {
         var services = new ServiceCollection().BuildServiceProvider();
@@ -40,13 +40,13 @@ public sealed class PipelineExecutorTests
             results.Add(result);
         }
 
-        Assert.Equal(2, results.Count);
-        Assert.Null(results[0].Errors);
-        Assert.NotNull(results[1].Errors);
-        Assert.Equal("boom", results[1].Workflow);
+        await Assert.That(results.Count).IsEqualTo(2);
+        await Assert.That(results[0].Errors).IsNull();
+        await Assert.That(results[1].Errors).IsNotNull();
+        await Assert.That(results[1].Workflow).IsEqualTo("boom");
     }
 
-    [Fact]
+    [Test]
     public async Task ExecuteAsync_HonoursStopSignal()
     {
         var services = new ServiceCollection().BuildServiceProvider();
@@ -73,11 +73,11 @@ public sealed class PipelineExecutorTests
             outputs.Add(result);
         }
 
-        Assert.Single(outputs);
-        Assert.Equal("first", outputs[0].Workflow);
+        await Assert.That(outputs).HasSingleItem();
+        await Assert.That(outputs[0].Workflow).IsEqualTo("first");
     }
 
-    [Fact]
+    [Test]
     public async Task ExecuteAsync_InvokesCallbacksAndUpdatesStats()
     {
         var services = new ServiceCollection().BuildServiceProvider();
@@ -111,22 +111,25 @@ public sealed class PipelineExecutorTests
             results.Add(result);
         }
 
-        Assert.Equal(new[] { "first", "second" }, callbacks.WorkflowStarts);
-        Assert.Equal(callbacks.WorkflowStarts, callbacks.WorkflowEnds);
-        Assert.Equal(2, callbacks.PipelineEndResults?.Count);
-        Assert.True(callbacks.PipelineStartedWith?.SequenceEqual(pipeline.Names));
+        await Assert.That(callbacks.WorkflowStarts).IsEquivalentTo(new[] { "first", "second" });
+        await Assert.That(callbacks.WorkflowEnds).IsEquivalentTo(callbacks.WorkflowStarts);
+        await Assert.That(callbacks.PipelineEndResults?.Count).IsEqualTo(2);
+        await Assert.That(callbacks.PipelineStartedWith?.SequenceEqual(pipeline.Names) ?? false).IsTrue();
 
-        Assert.Equal(2, results.Count);
-        Assert.All(results, r => Assert.Null(r.Errors));
+        await Assert.That(results.Count).IsEqualTo(2);
+        foreach (var r in results)
+        {
+            await Assert.That(r.Errors).IsNull();
+        }
 
-        Assert.True(stats.TotalRuntime >= 0);
-        Assert.True(stats.Workflows.ContainsKey("first"));
-        Assert.True(stats.Workflows["first"].ContainsKey("overall"));
-        Assert.True(stats.Workflows.ContainsKey("second"));
-        Assert.True(stats.Workflows["second"].ContainsKey("overall"));
+        await Assert.That(stats.TotalRuntime >= 0).IsTrue();
+        await Assert.That(stats.Workflows.ContainsKey("first")).IsTrue();
+        await Assert.That(stats.Workflows["first"].ContainsKey("overall")).IsTrue();
+        await Assert.That(stats.Workflows.ContainsKey("second")).IsTrue();
+        await Assert.That(stats.Workflows["second"].ContainsKey("overall")).IsTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task ExecuteAsync_RecordsExceptionInResultsAndStats()
     {
         var services = new ServiceCollection().BuildServiceProvider();
@@ -158,21 +161,22 @@ public sealed class PipelineExecutorTests
             results.Add(result);
         }
 
-        Assert.Equal(2, results.Count);
-        Assert.Null(results[0].Errors);
+        await Assert.That(results.Count).IsEqualTo(2);
+        await Assert.That(results[0].Errors).IsNull();
         var errorResult = results[1];
-        Assert.NotNull(errorResult.Errors);
-        var captured = Assert.Single(errorResult.Errors!);
-        Assert.Same(failure, captured);
+        await Assert.That(errorResult.Errors).IsNotNull();
+        await Assert.That(errorResult.Errors!).HasSingleItem();
+        var captured = errorResult.Errors!.Single();
+        await Assert.That(captured).IsSameReferenceAs(failure);
 
-        Assert.Equal(new[] { "good", "bad" }, callbacks.WorkflowStarts);
-        Assert.Equal(callbacks.WorkflowStarts, callbacks.WorkflowEnds);
-        Assert.Equal(2, callbacks.PipelineEndResults?.Count);
+        await Assert.That(callbacks.WorkflowStarts).IsEquivalentTo(new[] { "good", "bad" });
+        await Assert.That(callbacks.WorkflowEnds).IsEquivalentTo(callbacks.WorkflowStarts);
+        await Assert.That(callbacks.PipelineEndResults?.Count).IsEqualTo(2);
 
-        Assert.True(stats.Workflows.ContainsKey("good"));
-        Assert.True(stats.Workflows.ContainsKey("bad"));
-        Assert.False(stats.Workflows.ContainsKey("skipped"));
-        Assert.True(stats.TotalRuntime >= 0);
+        await Assert.That(stats.Workflows.ContainsKey("good")).IsTrue();
+        await Assert.That(stats.Workflows.ContainsKey("bad")).IsTrue();
+        await Assert.That(stats.Workflows.ContainsKey("skipped")).IsFalse();
+        await Assert.That(stats.TotalRuntime >= 0).IsTrue();
     }
 
     private sealed class RecordingCallbacks : IWorkflowCallbacks

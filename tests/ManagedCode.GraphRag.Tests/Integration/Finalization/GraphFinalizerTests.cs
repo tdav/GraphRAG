@@ -19,40 +19,40 @@ public class GraphFinalizerTests
         new("Alice", "Discovery", "Wrote about", 0.6, new[] { "tu-2" })
     };
 
-    [Fact]
-    public void FinalizeGraph_AssignsZeroLayout_WhenLayoutDisabled()
+    [Test]
+    public async Task FinalizeGraph_AssignsZeroLayout_WhenLayoutDisabled()
     {
         var result = GraphFinalizer.Finalize(SampleEntities, SampleRelationships);
 
-        Assert.Equal(SampleEntities.Length, result.Entities.Count);
-        Assert.Equal(SampleRelationships.Length, result.Relationships.Count);
+        await Assert.That(result.Entities.Count).IsEqualTo(SampleEntities.Length);
+        await Assert.That(result.Relationships.Count).IsEqualTo(SampleRelationships.Length);
 
-        Assert.All(result.Entities, entity =>
+        foreach (var entity in result.Entities)
         {
-            Assert.NotNull(entity.Id);
-            Assert.True(entity.HumanReadableId >= 0);
-            Assert.Equal(entity.Title == "Alice" ? 2 : entity.Title == "Bob" ? 1 : 1, entity.Degree);
-            Assert.Equal(0, entity.X);
-            Assert.Equal(0, entity.Y);
-        });
+            await Assert.That(entity.Id).IsNotNull();
+            await Assert.That(entity.HumanReadableId >= 0).IsTrue();
+            await Assert.That(entity.Degree).IsEqualTo(entity.Title == "Alice" ? 2 : entity.Title == "Bob" ? 1 : 1);
+            await Assert.That(entity.X).IsEqualTo(0);
+            await Assert.That(entity.Y).IsEqualTo(0);
+        }
 
-        Assert.All(result.Relationships, relationship =>
+        foreach (var relationship in result.Relationships)
         {
-            Assert.NotNull(relationship.Id);
-            Assert.True(relationship.HumanReadableId >= 0);
-            Assert.True(relationship.CombinedDegree > 0);
-        });
+            await Assert.That(relationship.Id).IsNotNull();
+            await Assert.That(relationship.HumanReadableId >= 0).IsTrue();
+            await Assert.That(relationship.CombinedDegree > 0).IsTrue();
+        }
 
-        Assert.Equal(0, result.Entities.Sum(e => e.X));
-        Assert.Equal(0, result.Entities.Sum(e => e.Y));
+        await Assert.That(result.Entities.Sum(e => e.X)).IsEqualTo(0);
+        await Assert.That(result.Entities.Sum(e => e.Y)).IsEqualTo(0);
     }
 
-    [Fact]
-    public void FinalizeGraph_AssignsCircularLayout_WhenLayoutEnabled()
+    [Test]
+    public async Task FinalizeGraph_AssignsCircularLayout_WhenLayoutEnabled()
     {
         var options = new GraphFinalizerOptions(LayoutEnabled: true);
         var result = GraphFinalizer.Finalize(SampleEntities, SampleRelationships, options);
 
-        Assert.Contains(result.Entities, e => Math.Abs(e.X) > double.Epsilon || Math.Abs(e.Y) > double.Epsilon);
+        await Assert.That(result.Entities).Contains(e => Math.Abs(e.X) > double.Epsilon || Math.Abs(e.Y) > double.Epsilon);
     }
 }

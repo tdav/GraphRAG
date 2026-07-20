@@ -16,7 +16,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class CreateCommunitiesWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task RunWorkflow_GroupsEntitiesAndPersistsCommunities()
     {
         var outputStorage = new MemoryPipelineStorage();
@@ -58,9 +58,10 @@ public sealed class CreateCommunitiesWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var communities = await outputStorage.LoadTableAsync<CommunityRecord>(PipelineTableNames.Communities);
-        Assert.Equal(3, communities.Count);
-        Assert.True(context.Items.TryGetValue("create_communities:count", out var countValue));
-        Assert.Equal(3, Assert.IsType<int>(countValue));
+        await Assert.That(communities.Count).IsEqualTo(3);
+        await Assert.That(context.Items.TryGetValue("create_communities:count", out var countValue)).IsTrue();
+        await Assert.That(countValue).IsTypeOf<int>();
+        await Assert.That((int)countValue!).IsEqualTo(3);
 
         var communityByMembers = communities.ToDictionary(
             community => community.EntityIds.OrderBy(id => id).ToArray(),
@@ -68,20 +69,20 @@ public sealed class CreateCommunitiesWorkflowTests
             new SequenceComparer<string>());
 
         var aliceBob = communityByMembers[new[] { "entity-alice", "entity-bob" }];
-        Assert.Equal(2, aliceBob.Size);
-        Assert.Equal(aliceBob.CommunityId, aliceBob.HumanReadableId);
-        Assert.Contains("rel-1", aliceBob.RelationshipIds);
-        Assert.Contains("unit-1", aliceBob.TextUnitIds);
-        Assert.Contains("unit-2", aliceBob.TextUnitIds);
-        Assert.Equal(-1, aliceBob.ParentId);
+        await Assert.That(aliceBob.Size).IsEqualTo(2);
+        await Assert.That(aliceBob.HumanReadableId).IsEqualTo(aliceBob.CommunityId);
+        await Assert.That(aliceBob.RelationshipIds).Contains("rel-1");
+        await Assert.That(aliceBob.TextUnitIds).Contains("unit-1");
+        await Assert.That(aliceBob.TextUnitIds).Contains("unit-2");
+        await Assert.That(aliceBob.ParentId).IsEqualTo(-1);
 
         var carol = communityByMembers[new[] { "entity-carol" }];
-        Assert.Empty(carol.RelationshipIds);
-        Assert.Contains("unit-3", carol.TextUnitIds);
+        await Assert.That(carol.RelationshipIds).IsEmpty();
+        await Assert.That(carol.TextUnitIds).Contains("unit-3");
 
         var dave = communityByMembers[new[] { "entity-dave" }];
-        Assert.Empty(dave.RelationshipIds);
-        Assert.Contains("unit-4", dave.TextUnitIds);
+        await Assert.That(dave.RelationshipIds).IsEmpty();
+        await Assert.That(dave.TextUnitIds).Contains("unit-4");
     }
 
     private sealed class SequenceComparer<T> : IEqualityComparer<IReadOnlyList<T>> where T : notnull

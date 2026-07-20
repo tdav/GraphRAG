@@ -6,8 +6,8 @@ namespace ManagedCode.GraphRag.Tests.Callbacks;
 
 public sealed class WorkflowCallbacksManagerTests
 {
-    [Fact]
-    public void Manager_ForwardsEventsToRegisteredCallbacks()
+    [Test]
+    public async Task Manager_ForwardsEventsToRegisteredCallbacks()
     {
         var manager = new WorkflowCallbacksManager();
         var spy = new SpyCallbacks();
@@ -20,11 +20,11 @@ public sealed class WorkflowCallbacksManagerTests
         manager.WorkflowEnd("step", null);
         manager.PipelineEnd(Array.Empty<PipelineRunResult>());
 
-        Assert.True(spy.PipelineStarted);
-        Assert.True(spy.WorkflowStarted);
-        Assert.True(spy.WorkflowEnded);
-        Assert.True(spy.ProgressReported);
-        Assert.True(spy.PipelineEnded);
+        await Assert.That(spy.PipelineStarted).IsTrue();
+        await Assert.That(spy.WorkflowStarted).IsTrue();
+        await Assert.That(spy.WorkflowEnded).IsTrue();
+        await Assert.That(spy.ProgressReported).IsTrue();
+        await Assert.That(spy.PipelineEnded).IsTrue();
     }
 
     private sealed class SpyCallbacks : IWorkflowCallbacks

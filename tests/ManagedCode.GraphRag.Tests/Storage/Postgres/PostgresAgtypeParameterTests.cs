@@ -11,12 +11,12 @@ using Npgsql;
 
 namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixture)
 {
     private readonly GraphRagApplicationFixture _fixture = fixture;
 
-    [Fact]
+    [Test]
     public async Task CypherParameters_WithStringValues_AreWrittenAsAgtype()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -67,9 +67,9 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
             var agResult = new Agtype(Convert.ToString(result, CultureInfo.InvariantCulture) ?? string.Empty);
             var vertex = agResult.GetVertex();
 
-            Assert.Equal(nodeId, vertex.Properties["id"]);
-            Assert.Equal("mentor-string", vertex.Properties["name"]);
-            Assert.Equal("Line one\nLine two", vertex.Properties["bio"]);
+            await Assert.That(vertex.Properties["id"]).IsEqualTo(nodeId);
+            await Assert.That(vertex.Properties["name"]).IsEqualTo("mentor-string");
+            await Assert.That(vertex.Properties["bio"]).IsEqualTo("Line one\nLine two");
         }
         finally
         {
@@ -78,11 +78,11 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         }
     }
 
-    [Fact]
+    [Test]
     public async Task GraphStore_UpsertNodes_WithStringProperties_UsesAgtypeParameters()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
 
         await store!.InitializeAsync();
 
@@ -105,16 +105,16 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         await store.UpsertNodesAsync(nodes);
 
         var stored = await FindNodeAsync(store, nodeId);
-        Assert.NotNull(stored);
-        Assert.Equal(description, stored!.Properties["description"]?.ToString());
-        Assert.Equal("mentorship", stored.Properties["category"]?.ToString());
+        await Assert.That(stored).IsNotNull();
+        await Assert.That(stored!.Properties["description"]?.ToString()).IsEqualTo(description);
+        await Assert.That(stored.Properties["category"]?.ToString()).IsEqualTo("mentorship");
     }
 
-    [Fact]
+    [Test]
     public async Task GraphStore_RejectsInjectionAttempts_InPropertyValues()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel("postgres");
@@ -133,17 +133,19 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         });
 
         var nodes = await CollectAsync(store.GetNodesAsync());
-        Assert.Contains(nodes, n => n.Id == sentinelId && n.Properties["name"]?.ToString() == "sentinel");
-        var injected = Assert.Single(nodes, n => n.Id == attackerId);
-        Assert.Equal(injectionPayload, injected.Properties["name"]?.ToString());
-        Assert.Equal("attacker", injected.Properties["role"]?.ToString());
+        await Assert.That(nodes).Contains(n => n.Id == sentinelId && n.Properties["name"]?.ToString() == "sentinel");
+        var attackerMatches = nodes.Where(n => n.Id == attackerId).ToList();
+        await Assert.That(attackerMatches).HasSingleItem();
+        var injected = attackerMatches[0];
+        await Assert.That(injected.Properties["name"]?.ToString()).IsEqualTo(injectionPayload);
+        await Assert.That(injected.Properties["role"]?.ToString()).IsEqualTo("attacker");
     }
 
-    [Fact]
+    [Test]
     public async Task GraphStore_RejectsInjectionAttempts_InIds()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel("postgres");
@@ -154,15 +156,15 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         await store.UpsertNodeAsync(dangerousId, label, new Dictionary<string, object?> { ["flag"] = "danger" });
 
         var nodes = await CollectAsync(store.GetNodesAsync());
-        Assert.Contains(nodes, n => n.Id == safeId && n.Properties["flag"]?.ToString() == "safe");
-        Assert.Contains(nodes, n => n.Id == dangerousId && n.Properties["flag"]?.ToString() == "danger");
+        await Assert.That(nodes).Contains(n => n.Id == safeId && n.Properties["flag"]?.ToString() == "safe");
+        await Assert.That(nodes).Contains(n => n.Id == dangerousId && n.Properties["flag"]?.ToString() == "danger");
     }
 
-    [Fact]
+    [Test]
     public async Task DeleteNodes_DoesNotCascade_WhenIdsContainInjectionLikeContent()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel("postgres");
@@ -175,19 +177,19 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         await store.DeleteNodesAsync(new[] { attackerId });
 
         var nodes = await CollectAsync(store.GetNodesAsync());
-        Assert.Contains(nodes, n => n.Id == sentinelId && n.Properties["flag"]?.ToString() == "safe");
-        Assert.DoesNotContain(nodes, n => n.Id == attackerId);
+        await Assert.That(nodes).Contains(n => n.Id == sentinelId && n.Properties["flag"]?.ToString() == "safe");
+        await Assert.That(nodes).DoesNotContain(n => n.Id == attackerId);
     }
 
-    [Fact]
+    [Test]
     public async Task UpsertNode_ThrowsOnInvalidLabelCharacters()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
 
         var badLabel = "User) DETACH DELETE n";
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await store!.UpsertNodeAsync("id", badLabel, new Dictionary<string, object?>()));
+        await Assert.That(async () =>
+            await store!.UpsertNodeAsync("id", badLabel, new Dictionary<string, object?>())).Throws<ArgumentException>();
     }
 
     public static IEnumerable<object[]> InjectionStringPayloads => new[]
@@ -200,12 +202,12 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         new object[] { "unicode-rtl-\u202Epayload" }
     };
 
-    [Theory]
-    [MemberData(nameof(InjectionStringPayloads))]
+    [Test]
+    [MethodDataSource(nameof(InjectionStringPayloads))]
     public async Task GraphStore_RejectsInjectionAttempts_InProperties_WithVariousPayloads(string payload)
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel("postgres");
@@ -216,16 +218,18 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         await store.UpsertNodeAsync(attackerId, label, new Dictionary<string, object?> { ["payload"] = payload });
 
         var nodes = await CollectAsync(store.GetNodesAsync());
-        Assert.Contains(nodes, n => n.Id == sentinelId && n.Properties["name"]?.ToString() == "sentinel");
-        var injected = Assert.Single(nodes, n => n.Id == attackerId);
-        Assert.Equal(payload, injected.Properties["payload"]?.ToString());
+        await Assert.That(nodes).Contains(n => n.Id == sentinelId && n.Properties["name"]?.ToString() == "sentinel");
+        var attackerMatches = nodes.Where(n => n.Id == attackerId).ToList();
+        await Assert.That(attackerMatches).HasSingleItem();
+        var injected = attackerMatches[0];
+        await Assert.That(injected.Properties["payload"]?.ToString()).IsEqualTo(payload);
     }
 
-    [Fact]
+    [Test]
     public async Task GraphStore_RejectsInjectionAttempts_InRelationshipTypes()
     {
         var store = _fixture.Services.GetKeyedService<IGraphStore>("postgres");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel("postgres");
@@ -235,8 +239,8 @@ public sealed class PostgresAgtypeParameterTests(GraphRagApplicationFixture fixt
         await store.UpsertNodeAsync(dst, label, new Dictionary<string, object?>());
 
         var badType = "BADTYPE'); MATCH (n) DETACH DELETE n; //";
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await store.UpsertRelationshipAsync(src, dst, badType, new Dictionary<string, object?> { ["score"] = 1 }));
+        await Assert.That(async () =>
+            await store.UpsertRelationshipAsync(src, dst, badType, new Dictionary<string, object?> { ["score"] = 1 })).Throws<ArgumentException>();
     }
 
     private static async Task<GraphNode?> FindNodeAsync(IGraphStore store, string nodeId, CancellationToken cancellationToken = default)

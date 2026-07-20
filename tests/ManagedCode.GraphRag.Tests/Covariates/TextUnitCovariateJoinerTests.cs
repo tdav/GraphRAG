@@ -5,8 +5,8 @@ namespace ManagedCode.GraphRag.Tests.Covariates;
 
 public sealed class TextUnitCovariateJoinerTests
 {
-    [Fact]
-    public void Attach_MergesCovariateIdentifiersOntoTextUnits()
+    [Test]
+    public async Task Attach_MergesCovariateIdentifiersOntoTextUnits()
     {
         var textUnits = new[]
         {
@@ -44,13 +44,19 @@ public sealed class TextUnitCovariateJoinerTests
 
         var updated = TextUnitCovariateJoiner.Attach(textUnits, covariates);
 
-        var first = Assert.Single(updated, unit => unit.Id == "unit-1");
-        Assert.Equal(new[] { "cov-1", "cov-2" }, first.CovariateIds);
+        var firstMatches = updated.Where(unit => unit.Id == "unit-1").ToList();
+        await Assert.That(firstMatches).HasSingleItem();
+        var first = firstMatches.Single();
+        await Assert.That(first.CovariateIds).IsEquivalentTo(new[] { "cov-1", "cov-2" });
 
-        var second = Assert.Single(updated, unit => unit.Id == "unit-2");
-        Assert.Equal(new[] { "cov-3", "existing" }, second.CovariateIds);
+        var secondMatches = updated.Where(unit => unit.Id == "unit-2").ToList();
+        await Assert.That(secondMatches).HasSingleItem();
+        var second = secondMatches.Single();
+        await Assert.That(second.CovariateIds).IsEquivalentTo(new[] { "cov-3", "existing" });
 
-        var third = Assert.Single(updated, unit => unit.Id == "unit-3");
-        Assert.Empty(third.CovariateIds);
+        var thirdMatches = updated.Where(unit => unit.Id == "unit-3").ToList();
+        await Assert.That(thirdMatches).HasSingleItem();
+        var third = thirdMatches.Single();
+        await Assert.That(third.CovariateIds).IsEmpty();
     }
 }

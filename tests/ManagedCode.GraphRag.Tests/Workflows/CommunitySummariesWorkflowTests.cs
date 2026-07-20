@@ -17,7 +17,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class CommunitySummariesWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task CommunitySummariesWorkflow_GeneratesReports()
     {
         const string summaryPayload = "Research figures collaborate on AI safety initiatives.";
@@ -58,10 +58,11 @@ public sealed class CommunitySummariesWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var reports = await outputStorage.LoadTableAsync<CommunityReportRecord>(PipelineTableNames.CommunityReports);
-        var report = Assert.Single(reports);
-        Assert.Equal("community_1", report.CommunityId);
-        Assert.Contains("Alice", report.EntityTitles);
-        Assert.Contains("Bob", report.EntityTitles);
-        Assert.Equal(summaryPayload, report.Summary);
+        await Assert.That(reports).HasSingleItem();
+        var report = reports.Single();
+        await Assert.That(report.CommunityId).IsEqualTo("community_1");
+        await Assert.That(report.EntityTitles).Contains("Alice");
+        await Assert.That(report.EntityTitles).Contains("Bob");
+        await Assert.That(report.Summary).IsEqualTo(summaryPayload);
     }
 }

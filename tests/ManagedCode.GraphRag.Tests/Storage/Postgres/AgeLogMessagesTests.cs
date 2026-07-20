@@ -5,7 +5,7 @@ namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
 public sealed class AgeLogMessagesTests
 {
-    [Fact]
+    [Test]
     public void LogMessages_ConnectionScenarios_DoNotThrow()
     {
         var logger = NullLogger.Instance;
@@ -17,7 +17,7 @@ public sealed class AgeLogMessagesTests
         LogMessages.CloseConnectionError(logger, "close", new InvalidOperationException());
     }
 
-    [Fact]
+    [Test]
     public void LogMessages_InternalOperations_DoNotThrow()
     {
         var logger = NullLogger.Instance;
@@ -30,7 +30,7 @@ public sealed class AgeLogMessagesTests
         LogMessages.AgCatalogNotAddedToSearchPathError(logger, "reason");
     }
 
-    [Fact]
+    [Test]
     public void LogMessages_CommandOperations_DoNotThrow()
     {
         var logger = NullLogger.Instance;

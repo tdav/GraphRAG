@@ -5,59 +5,59 @@ namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
 public sealed class AgtypeTests
 {
-    [Fact]
-    public void Agtype_ConvertsNumericValues()
+    [Test]
+    public async Task Agtype_ConvertsNumericValues()
     {
         var agtype = new Agtype("42");
-        Assert.Equal("42", agtype.GetString());
-        Assert.Equal(42, agtype.GetInt32());
-        Assert.Equal(42u, agtype.GetUInt32());
-        Assert.Equal(42L, agtype.GetInt64());
-        Assert.Equal(42UL, agtype.GetUInt64());
-        Assert.Equal(42m, agtype.GetDecimal());
-        Assert.Equal((byte)42, agtype.GetByte());
-        Assert.Equal((sbyte)42, agtype.GetSByte());
-        Assert.Equal((short)42, agtype.GetInt16());
-        Assert.Equal((ushort)42, agtype.GetUInt16());
+        await Assert.That(agtype.GetString()).IsEqualTo("42");
+        await Assert.That(agtype.GetInt32()).IsEqualTo(42);
+        await Assert.That(agtype.GetUInt32()).IsEqualTo(42u);
+        await Assert.That(agtype.GetInt64()).IsEqualTo(42L);
+        await Assert.That(agtype.GetUInt64()).IsEqualTo(42UL);
+        await Assert.That(agtype.GetDecimal()).IsEqualTo(42m);
+        await Assert.That(agtype.GetByte()).IsEqualTo((byte)42);
+        await Assert.That(agtype.GetSByte()).IsEqualTo((sbyte)42);
+        await Assert.That(agtype.GetInt16()).IsEqualTo((short)42);
+        await Assert.That(agtype.GetUInt16()).IsEqualTo((ushort)42);
     }
 
-    [Fact]
-    public void Agtype_ConvertsFloatingPointLiterals()
+    [Test]
+    public async Task Agtype_ConvertsFloatingPointLiterals()
     {
-        Assert.True(new Agtype("true").GetBoolean());
-        Assert.False(new Agtype("false").GetBoolean());
+        await Assert.That(new Agtype("true").GetBoolean()).IsTrue();
+        await Assert.That(new Agtype("false").GetBoolean()).IsFalse();
 
-        Assert.Equal(double.NegativeInfinity, new Agtype("-Infinity").GetDouble());
-        Assert.Equal(double.PositiveInfinity, new Agtype("Infinity").GetDouble());
-        Assert.True(double.IsNaN(new Agtype("NaN").GetDouble()));
+        await Assert.That(new Agtype("-Infinity").GetDouble()).IsEqualTo(double.NegativeInfinity);
+        await Assert.That(new Agtype("Infinity").GetDouble()).IsEqualTo(double.PositiveInfinity);
+        await Assert.That(double.IsNaN(new Agtype("NaN").GetDouble())).IsTrue();
 
-        Assert.Equal(float.NegativeInfinity, new Agtype("-Infinity").GetFloat());
-        Assert.Equal(float.PositiveInfinity, new Agtype("Infinity").GetFloat());
-        Assert.True(float.IsNaN(new Agtype("NaN").GetFloat()));
+        await Assert.That(new Agtype("-Infinity").GetFloat()).IsEqualTo(float.NegativeInfinity);
+        await Assert.That(new Agtype("Infinity").GetFloat()).IsEqualTo(float.PositiveInfinity);
+        await Assert.That(float.IsNaN(new Agtype("NaN").GetFloat())).IsTrue();
     }
 
-    [Fact]
-    public void Agtype_ReturnsListsAndVertices()
+    [Test]
+    public async Task Agtype_ReturnsListsAndVertices()
     {
         var payload = @"[{""value"":1},{""value"":2}]";
         var list = new Agtype(payload).GetList();
-        Assert.Equal(2, list.Count);
+        await Assert.That(list.Count).IsEqualTo(2);
 
         var vertexJson =
             @"{""id"": 1,""label"": ""Entity"",""properties"": {""name"": ""alpha""}}::vertex";
         var vertex = new Agtype(vertexJson).GetVertex();
-        Assert.Equal("Entity", vertex.Label);
-        Assert.Equal("alpha", vertex.Properties["name"]);
+        await Assert.That(vertex.Label).IsEqualTo("Entity");
+        await Assert.That(vertex.Properties["name"]).IsEqualTo("alpha");
 
         var edgeJson =
             @"{""id"": 2,""label"": ""CONNECTS"",""start_id"": 1,""end_id"": 2,""properties"": {""weight"": 0.5}}::edge";
         var edge = new Agtype(edgeJson).GetEdge();
-        Assert.Equal("CONNECTS", edge.Label);
-        Assert.Equal(0.5m, Convert.ToDecimal(edge.Properties["weight"], CultureInfo.InvariantCulture));
+        await Assert.That(edge.Label).IsEqualTo("CONNECTS");
+        await Assert.That(Convert.ToDecimal(edge.Properties["weight"], CultureInfo.InvariantCulture)).IsEqualTo(0.5m);
     }
 
-    [Fact]
-    public void Agtype_ReturnsPaths()
+    [Test]
+    public async Task Agtype_ReturnsPaths()
     {
         var vertexA =
             @"{""id"": 1,""label"": ""Entity"",""properties"": {""name"": ""alpha""}}::vertex";
@@ -69,24 +69,24 @@ public sealed class AgtypeTests
 
         var path = new Agtype(pathPayload).GetPath();
 
-        Assert.Equal(1, path.Length);
-        Assert.Equal(2, path.Vertices.Length);
-        Assert.Single(path.Edges);
-        Assert.Equal("alpha", path.Vertices[0].Properties["name"]);
-        Assert.Equal("CONNECTS", path.Edges[0].Label);
+        await Assert.That(path.Length).IsEqualTo(1);
+        await Assert.That(path.Vertices.Length).IsEqualTo(2);
+        await Assert.That(path.Edges).HasSingleItem();
+        await Assert.That(path.Vertices[0].Properties["name"]).IsEqualTo("alpha");
+        await Assert.That(path.Edges[0].Label).IsEqualTo("CONNECTS");
     }
 
-    [Fact]
-    public void Agtype_InvalidVertexThrows()
+    [Test]
+    public async Task Agtype_InvalidVertexThrows()
     {
         var agtype = new Agtype(@"{""id"":1}::edge");
-        Assert.Throws<FormatException>(() => agtype.GetVertex());
+        await Assert.That(() => agtype.GetVertex()).Throws<FormatException>();
     }
 
-    [Fact]
-    public void Agtype_InvalidPathThrows()
+    [Test]
+    public async Task Agtype_InvalidPathThrows()
     {
         var agtype = new Agtype(@"[{""id"":1}]");
-        Assert.Throws<FormatException>(() => agtype.GetPath());
+        await Assert.That(() => agtype.GetPath()).Throws<FormatException>();
     }
 }

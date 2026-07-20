@@ -6,7 +6,7 @@ namespace ManagedCode.GraphRag.Tests.Storage;
 
 public sealed class FilePipelineStorageTests
 {
-    [Fact]
+    [Test]
     public async Task FindAsync_AppliesRegexMetadataAndFilter()
     {
         var root = Path.Combine(Path.GetTempPath(), $"graphrag-tests-{Guid.NewGuid():N}");
@@ -26,11 +26,11 @@ public sealed class FilePipelineStorageTests
                 matches.Add(item);
             }
 
-            Assert.Single(matches);
+            await Assert.That(matches).HasSingleItem();
             var match = matches[0];
-            Assert.Equal("reports/doc-1.json", match.Path);
-            Assert.Equal("reports", match.Metadata["category"]);
-            Assert.Equal("doc-1.json", match.Metadata["file"]);
+            await Assert.That(match.Path).IsEqualTo("reports/doc-1.json");
+            await Assert.That(match.Metadata["category"]).IsEqualTo("reports");
+            await Assert.That(match.Metadata["file"]).IsEqualTo("doc-1.json");
         }
         finally
         {
@@ -41,7 +41,7 @@ public sealed class FilePipelineStorageTests
         }
     }
 
-    [Fact]
+    [Test]
     public async Task GetAsync_ReadsTextWithEncoding()
     {
         var root = Path.Combine(Path.GetTempPath(), $"graphrag-tests-{Guid.NewGuid():N}");
@@ -53,9 +53,9 @@ public sealed class FilePipelineStorageTests
             await storage.SetAsync("notes/doc.txt", new MemoryStream(Encoding.UTF8.GetBytes(content)));
 
             await using var stream = await storage.GetAsync("notes/doc.txt", encoding: Encoding.UTF8);
-            Assert.NotNull(stream);
+            await Assert.That(stream).IsNotNull();
             using var reader = new StreamReader(stream!, Encoding.UTF8);
-            Assert.Equal(content, await reader.ReadToEndAsync());
+            await Assert.That(await reader.ReadToEndAsync()).IsEqualTo(content);
         }
         finally
         {
@@ -66,7 +66,7 @@ public sealed class FilePipelineStorageTests
         }
     }
 
-    [Fact]
+    [Test]
     public async Task ClearAsync_RemovesAllFiles()
     {
         var root = Path.Combine(Path.GetTempPath(), $"graphrag-tests-{Guid.NewGuid():N}");
@@ -85,7 +85,7 @@ public sealed class FilePipelineStorageTests
                 matches.Add(item);
             }
 
-            Assert.Empty(matches);
+            await Assert.That(matches).IsEmpty();
         }
         finally
         {

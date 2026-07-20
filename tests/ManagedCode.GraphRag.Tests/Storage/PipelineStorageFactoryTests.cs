@@ -5,22 +5,22 @@ namespace ManagedCode.GraphRag.Tests.Storage;
 
 public sealed class PipelineStorageFactoryTests
 {
-    [Fact]
-    public void Create_ReturnsMemoryStorageForMemoryType()
+    [Test]
+    public async Task Create_ReturnsMemoryStorageForMemoryType()
     {
         var config = new StorageConfig { Type = StorageType.Memory };
         var storage = PipelineStorageFactory.Create(config);
-        Assert.IsType<MemoryPipelineStorage>(storage);
+        await Assert.That(storage).IsTypeOf<MemoryPipelineStorage>();
     }
 
-    [Fact]
-    public void Create_ReturnsFileStorageForFileType()
+    [Test]
+    public async Task Create_ReturnsFileStorageForFileType()
     {
         var config = new StorageConfig { Type = StorageType.File, BaseDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")) };
         var storage = PipelineStorageFactory.Create(config);
         try
         {
-            Assert.IsType<FilePipelineStorage>(storage);
+            await Assert.That(storage).IsTypeOf<FilePipelineStorage>();
         }
         finally
         {
@@ -31,10 +31,10 @@ public sealed class PipelineStorageFactoryTests
         }
     }
 
-    [Fact]
-    public void Create_ThrowsForUnsupportedType()
+    [Test]
+    public async Task Create_ThrowsForUnsupportedType()
     {
         var config = new StorageConfig { Type = StorageType.Blob };
-        Assert.Throws<NotSupportedException>(() => PipelineStorageFactory.Create(config));
+        await Assert.That(() => PipelineStorageFactory.Create(config)).Throws<NotSupportedException>();
     }
 }

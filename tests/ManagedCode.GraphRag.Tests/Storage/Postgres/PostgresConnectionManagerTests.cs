@@ -7,14 +7,14 @@ using Npgsql;
 
 namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fixture)
 {
     private const string SeedNodeId = "__seed__";
     private const int SharedConnectionLimit = 40;
     private readonly GraphRagApplicationFixture _fixture = fixture;
 
-    [Fact]
+    [Test]
     public async Task AgeConnectionManager_HandlesConcurrentGraphWrites_WithSharedManager()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -32,7 +32,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await CleanupGraphAsync(manager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task AgeConnectionManager_HandlesConcurrentGraphWrites_WithEphemeralManagers()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -48,7 +48,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await CleanupGraphAsync(manager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task AgeClientFactory_CreatesManyClientsSequentially()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -75,7 +75,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
             await client.OpenConnectionAsync();
 
             var exists = await client.GraphExistsAsync(graphName);
-            Assert.True(exists, "Graph should exist for every constructed client.");
+            await Assert.That(exists).IsTrue().Because("Graph should exist for every constructed client.");
 
             await client.CloseConnectionAsync();
         }
@@ -83,7 +83,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await CleanupGraphAsync(manager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task AgeClientFactory_HandlesParallelClients()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -116,7 +116,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
                 $"SELECT COUNT(*) FROM ag_catalog.cypher('{graphName}', $$ MATCH (n:ParallelNode {{ id: '{nodeId}' }}) RETURN n $$) AS (result ag_catalog.agtype);",
                 client.Connection);
             var exists = (long)(await verifyCommand.ExecuteScalarAsync() ?? 0L);
-            Assert.Equal(1, exists);
+            await Assert.That(exists).IsEqualTo(1);
 
             await client.CloseConnectionAsync();
         });
@@ -126,7 +126,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await CleanupGraphAsync(manager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task AgeClientFactory_ReusesConnectionsWithinScope()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -161,14 +161,14 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await secondClient.OpenConnectionAsync();
         var secondProcessId = secondClient.Connection.ProcessID;
 
-        Assert.Equal(firstProcessId, secondProcessId);
+        await Assert.That(secondProcessId).IsEqualTo(firstProcessId);
 
         await secondClient.CloseConnectionAsync();
 
         await CleanupGraphAsync(manager, graphName);
     }
 
-    [Fact]
+    [Test]
     public async Task GraphStoreScopes_HandleMassiveParallelism()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -196,7 +196,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         await Task.WhenAll(tasks);
 
         var totalNodes = await CountNodesAsync(manager, graphName, "ScopedLoadTest");
-        Assert.Equal(scopeCount * operationsPerScope, totalNodes);
+        await Assert.That(totalNodes).IsEqualTo(scopeCount * operationsPerScope);
 
         await CleanupGraphAsync(manager, graphName);
 
@@ -217,7 +217,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         }
     }
 
-    [Fact]
+    [Test]
     public async Task AgeConnectionManager_RetriesWhenServerReportsTooManyClients()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -241,7 +241,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
             await ReleaseOneConnectionAsync(heldConnections);
 
             await using var connection = await openTask;
-            Assert.True(connection.FullState.HasFlag(System.Data.ConnectionState.Open));
+            await Assert.That(connection.FullState.HasFlag(System.Data.ConnectionState.Open)).IsTrue();
 
             await manager.ReturnConnectionAsync(connection, cts.Token);
         }
@@ -254,7 +254,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
         }
     }
 
-    [Fact]
+    [Test]
     public async Task AgeConnectionManager_ThrowsAfterRetryLimitWhenConnectionsUnavailable()
     {
         var connectionString = _fixture.PostgresConnectionString;
@@ -271,7 +271,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
             await using var manager = CreateManager(connectionString, SharedConnectionLimit);
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
-            await Assert.ThrowsAsync<PostgresException>(() => manager.OpenConnectionAsync(cts.Token));
+            await Assert.That(async () => { await manager.OpenConnectionAsync(cts.Token); }).Throws<PostgresException>();
         }
         finally
         {
@@ -333,7 +333,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
             $"SELECT COUNT(*) FROM ag_catalog.cypher('{graphName}', $$ MATCH (n:ConcurrencyTest {{ id: '{nodeId}' }}) RETURN n $$) AS (result ag_catalog.agtype);",
             client.Connection);
         var count = (long)(await verifyCommand.ExecuteScalarAsync().ConfigureAwait(false) ?? 0L);
-        Assert.Equal(1, count);
+        await Assert.That(count).IsEqualTo(1);
 
         await client.CloseConnectionAsync().ConfigureAwait(false);
     }
@@ -352,7 +352,7 @@ public sealed class PostgresConnectionManagerTests(GraphRagApplicationFixture fi
             client.Connection);
 
         var inserted = (long)(await countCommand.ExecuteScalarAsync().ConfigureAwait(false) ?? 0L);
-        Assert.Equal(expected, inserted);
+        await Assert.That(inserted).IsEqualTo(expected);
 
         await client.CloseConnectionAsync().ConfigureAwait(false);
     }

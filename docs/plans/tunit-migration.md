@@ -69,6 +69,22 @@ Apply `[Test]` normally; the hook skips them. (`using TUnit.Core;` for `Skip`.)
   - remove `<Using Include="Xunit" />`; add `<Using Include="TUnit.Core" />` (and rely on TUnit's implicit usings). Keep other usings (Testcontainers, EF, etc.).
 - Run with `dotnet test` (works with TUnit via MTP; on .NET 10 flags pass without `--`). `dotnet run --project <testproj>` runs a single TFM.
 
+## CRITICAL GOTCHAS (learned from the MyGraphRagV5.Tests conversion)
+- **Collections: use `IsEquivalentTo`, NOT `IsEqualTo`.** `await Assert.That(list).IsEqualTo(otherList)` compiles but does REFERENCE equality on arrays/lists and fails at runtime. For sequence/collection value comparison use `await Assert.That(actual).IsEquivalentTo(expected)`. (Applies to arrays, List<T>, etc.)
+- **`dotnet test` needs a repo-root `global.json`** with `{"test":{"runner":"Microsoft.Testing.Platform"}}` on this .NET 10 SDK, else it errors "VSTest target no longer supported". This file is added once for the whole repo. To run a single converted project you can also build it and run the produced `.exe` directly.
+- Every `Assert.That(...)` MUST be `await`ed. A grep for `Assert.That` not preceded by `await`/`=> `/`Throws` should return nothing.
+
+## ManagedCode.GraphRag.Tests — specific fixture recipe
+This project shares ONE Testcontainers fixture across many integration classes via an xUnit collection:
+- `GraphRagApplicationFixture : IAsyncLifetime` (Neo4j/Postgres/Cosmos/Janus containers; `InitializeAsync`/`DisposeAsync`).
+- `GraphRagApplicationCollection` = `[CollectionDefinition(nameof(GraphRagApplicationCollection))]` + `ICollectionFixture<GraphRagApplicationFixture>`.
+- 11 classes use `[Collection(nameof(GraphRagApplicationCollection))]` and receive the fixture via their constructor.
+
+Convert:
+1. `GraphRagApplicationFixture`: change `: IAsyncLifetime` → `: TUnit.Core.Interfaces.IAsyncInitializer, IAsyncDisposable`. Keep `public async Task InitializeAsync()` as-is (that's the `IAsyncInitializer` member). Change `public async Task DisposeAsync()` → `public async ValueTask DisposeAsync()` (IAsyncDisposable returns ValueTask; the body's `await ...DisposeAsync()` calls are fine). All container logic stays identical.
+2. DELETE `GraphRagApplicationCollection.cs` (no longer needed).
+3. On each of the 11 classes: replace `[Collection(nameof(GraphRagApplicationCollection))]` with `[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]` (one shared instance for the whole assembly, matching ICollectionFixture). KEEP their constructor that takes `GraphRagApplicationFixture` (TUnit injects it) — or convert to a primary constructor. Then apply the normal `[Fact]→[Test]` + assertion conversion to the test methods.
+
 ## Verification
 - `dotnet build GraphRag.slnx` green (TUnit analyzers flag un-awaited assertions — treat any such warning/error as a real bug and fix by awaiting).
 - Run the converted project's tests; **assert the pass COUNT matches the pre-migration count** (MyGraphRagV5.Tests: 67 unit + 5 integration; ManagedCode.GraphRag.Tests: 244 — many need Docker/emulators and may skip, so verify compile + the container-free subset, and that nothing is silently dropped).

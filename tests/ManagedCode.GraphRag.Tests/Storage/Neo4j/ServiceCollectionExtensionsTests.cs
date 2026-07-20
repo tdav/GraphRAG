@@ -8,7 +8,7 @@ namespace ManagedCode.GraphRag.Tests.Storage.Neo4j;
 
 public sealed class ServiceCollectionExtensionsTests
 {
-    [Fact]
+    [Test]
     public async Task AddNeo4jGraphStore_RegistersKeyedServices()
     {
         var services = new ServiceCollection();
@@ -23,10 +23,10 @@ public sealed class ServiceCollectionExtensionsTests
 
         await using var provider = services.BuildServiceProvider();
         var store = provider.GetRequiredKeyedService<Neo4jGraphStore>("primary");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
     }
 
-    [Fact]
+    [Test]
     public async Task AddNeo4jGraphStore_FirstStoreIsDefault()
     {
         var services = new ServiceCollection();
@@ -44,11 +44,11 @@ public sealed class ServiceCollectionExtensionsTests
         var store = provider.GetRequiredService<Neo4jGraphStore>();
         var graphStore = provider.GetRequiredService<IGraphStore>();
 
-        Assert.Same(keyed, store);
-        Assert.Same(store, graphStore);
+        await Assert.That(store).IsSameReferenceAs(keyed);
+        await Assert.That(graphStore).IsSameReferenceAs(store);
     }
 
-    [Fact]
+    [Test]
     public async Task AddNeo4jGraphStore_SubsequentStoresDoNotOverrideDefault()
     {
         var services = new ServiceCollection();
@@ -76,9 +76,9 @@ public sealed class ServiceCollectionExtensionsTests
         var secondaryStore = provider.GetRequiredKeyedService<Neo4jGraphStore>("secondary");
         var secondaryGraphStore = provider.GetRequiredKeyedService<IGraphStore>("secondary");
 
-        Assert.Same(primaryStore, defaultStore);
-        Assert.Same(defaultStore, graphStore);
-        Assert.NotSame(primaryStore, secondaryStore);
-        Assert.Same(secondaryStore, secondaryGraphStore);
+        await Assert.That(defaultStore).IsSameReferenceAs(primaryStore);
+        await Assert.That(graphStore).IsSameReferenceAs(defaultStore);
+        await Assert.That(secondaryStore).IsNotSameReferenceAs(primaryStore);
+        await Assert.That(secondaryGraphStore).IsSameReferenceAs(secondaryStore);
     }
 }

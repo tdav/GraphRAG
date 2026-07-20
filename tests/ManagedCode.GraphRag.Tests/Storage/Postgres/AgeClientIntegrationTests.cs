@@ -5,10 +5,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class AgeClientIntegrationTests(GraphRagApplicationFixture fixture)
 {
-    [Fact]
+    [Test]
     public async Task AgeClient_RoundTripsVerticesWithAgtypeReader()
     {
         var connectionString = fixture.PostgresConnectionString;
@@ -26,25 +26,25 @@ public sealed class AgeClientIntegrationTests(GraphRagApplicationFixture fixture
 
         var query = $"SELECT * FROM ag_catalog.cypher('{graphName}', $$ MATCH (n:Entity {{ id: '{nodeId}' }}) RETURN n $$) AS (vertex ag_catalog.agtype);";
         var reader = await client.ExecuteQueryAsync(query);
-        Assert.True(await reader.ReadAsync());
+        await Assert.That(await reader.ReadAsync()).IsTrue();
 
         var buffer = new object[reader.FieldCount];
         reader.GetValues(buffer);
 
         var directAgtype = (Agtype)buffer[0];
         var vertex = directAgtype.GetVertex();
-        Assert.Equal(nodeId, vertex.Properties["id"]);
+        await Assert.That(vertex.Properties["id"]).IsEqualTo(nodeId);
 
         var viaTyped = reader.GetValue<Agtype>(0);
-        Assert.Equal(vertex.Label, viaTyped.GetVertex().Label);
+        await Assert.That(viaTyped.GetVertex().Label).IsEqualTo(vertex.Label);
 
         var viaAsync = await reader.GetValueAsync<Agtype>(0);
-        Assert.Equal(vertex.Properties["score"], viaAsync.GetVertex().Properties["score"]);
+        await Assert.That(viaAsync.GetVertex().Properties["score"]).IsEqualTo(vertex.Properties["score"]);
 
         await reader.DisposeAsync();
 
         await client.DropGraphAsync(graphName, cascade: true);
-        Assert.False(await client.GraphExistsAsync(graphName));
+        await Assert.That(await client.GraphExistsAsync(graphName)).IsFalse();
         await client.CloseConnectionAsync();
     }
 }

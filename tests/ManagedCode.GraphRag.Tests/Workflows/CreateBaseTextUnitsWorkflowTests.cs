@@ -14,7 +14,7 @@ namespace ManagedCode.GraphRag.Tests.Workflows;
 
 public sealed class CreateBaseTextUnitsWorkflowTests
 {
-    [Fact]
+    [Test]
     public async Task RunWorkflow_PrependsMetadata_WhenConfigured()
     {
         var services = new ServiceCollection()
@@ -63,13 +63,21 @@ public sealed class CreateBaseTextUnitsWorkflowTests
         await workflow(config, context, CancellationToken.None);
 
         var textUnits = await outputStorage.LoadTableAsync<TextUnitRecord>(PipelineTableNames.TextUnits);
-        Assert.NotEmpty(textUnits);
-        Assert.All(textUnits, unit => Assert.Contains("author:", unit.Text));
-        Assert.All(textUnits, unit => Assert.Contains("doc-1", unit.DocumentIds));
-        Assert.Equal(1, context.Stats.NumDocuments);
+        await Assert.That(textUnits).IsNotEmpty();
+        foreach (var unit in textUnits)
+        {
+            await Assert.That(unit.Text).Contains("author:");
+        }
+
+        foreach (var unit in textUnits)
+        {
+            await Assert.That(unit.DocumentIds).Contains("doc-1");
+        }
+
+        await Assert.That(context.Stats.NumDocuments).IsEqualTo(1);
     }
 
-    [Fact]
+    [Test]
     public async Task RunWorkflow_ThrowsWhenMetadataExceedsChunkBudget()
     {
         var services = new ServiceCollection()
@@ -114,13 +122,13 @@ public sealed class CreateBaseTextUnitsWorkflowTests
         };
 
         var workflow = CreateBaseTextUnitsWorkflow.Create();
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.That(async () =>
         {
             await workflow(config, context, CancellationToken.None);
-        });
+        }).Throws<InvalidOperationException>();
     }
 
-    [Fact]
+    [Test]
     public async Task RunWorkflow_GeneratesStableTextUnitIds()
     {
         var services = new ServiceCollection()
@@ -168,9 +176,9 @@ public sealed class CreateBaseTextUnitsWorkflowTests
         await workflow(config, context, CancellationToken.None);
         var second = await outputStorage.LoadTableAsync<TextUnitRecord>(PipelineTableNames.TextUnits);
 
-        Assert.Equal(first.Count, second.Count);
+        await Assert.That(second.Count).IsEqualTo(first.Count);
         var firstIds = first.Select(unit => unit.Id).OrderBy(id => id, StringComparer.Ordinal).ToArray();
         var secondIds = second.Select(unit => unit.Id).OrderBy(id => id, StringComparer.Ordinal).ToArray();
-        Assert.Equal(firstIds, secondIds);
+        await Assert.That(secondIds).IsEquivalentTo(firstIds);
     }
 }

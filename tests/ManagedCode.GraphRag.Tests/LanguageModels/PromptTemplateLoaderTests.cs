@@ -14,8 +14,8 @@ public sealed class PromptTemplateLoaderTests : IDisposable
         Directory.CreateDirectory(_rootDir);
     }
 
-    [Fact]
-    public void ResolveOrDefault_UsesExplicitPath()
+    [Test]
+    public async Task ResolveOrDefault_UsesExplicitPath()
     {
         var templatePath = Path.Combine(_rootDir, "custom.txt");
         File.WriteAllText(templatePath, "explicit prompt");
@@ -25,11 +25,11 @@ public sealed class PromptTemplateLoaderTests : IDisposable
 
         var prompt = loader.ResolveOrDefault(PromptTemplateKeys.ExtractGraphUser, "custom.txt", "fallback");
 
-        Assert.Equal("explicit prompt", prompt);
+        await Assert.That(prompt).IsEqualTo("explicit prompt");
     }
 
-    [Fact]
-    public void ResolveOptional_ReadsManualDirectory()
+    [Test]
+    public async Task ResolveOptional_ReadsManualDirectory()
     {
         var manualDirectory = Path.Combine(_rootDir, "manual");
         Directory.CreateDirectory(Path.Combine(manualDirectory, "index", "community_reports"));
@@ -52,11 +52,11 @@ public sealed class PromptTemplateLoaderTests : IDisposable
         var loader = PromptTemplateLoader.Create(config);
         var prompt = loader.ResolveOptional(PromptTemplateKeys.CommunitySummaryUser, null);
 
-        Assert.Equal("manual prompt", prompt);
+        await Assert.That(prompt).IsEqualTo("manual prompt");
     }
 
-    [Fact]
-    public void ResolveOrDefault_FallsBackToAutoDirectory()
+    [Test]
+    public async Task ResolveOrDefault_FallsBackToAutoDirectory()
     {
         var autoDirectory = Path.Combine(_rootDir, "auto");
         Directory.CreateDirectory(Path.Combine(autoDirectory, "index", "extract_graph"));
@@ -79,22 +79,22 @@ public sealed class PromptTemplateLoaderTests : IDisposable
         var loader = PromptTemplateLoader.Create(config);
         var prompt = loader.ResolveOrDefault(PromptTemplateKeys.ExtractGraphSystem, null, "fallback");
 
-        Assert.Equal("auto system", prompt);
+        await Assert.That(prompt).IsEqualTo("auto system");
     }
 
-    [Fact]
-    public void ResolveOrDefault_AllowsInlinePromptWithPrefix()
+    [Test]
+    public async Task ResolveOrDefault_AllowsInlinePromptWithPrefix()
     {
         var config = new GraphRagConfig();
         var loader = PromptTemplateLoader.Create(config);
 
         var prompt = loader.ResolveOrDefault(PromptTemplateKeys.ExtractGraphSystem, "inline:custom text", "fallback");
 
-        Assert.Equal("custom text", prompt);
+        await Assert.That(prompt).IsEqualTo("custom text");
     }
 
-    [Fact]
-    public void ResolveOrDefault_AllowsInlinePromptWithNewlines()
+    [Test]
+    public async Task ResolveOrDefault_AllowsInlinePromptWithNewlines()
     {
         var config = new GraphRagConfig();
         var loader = PromptTemplateLoader.Create(config);
@@ -102,7 +102,7 @@ public sealed class PromptTemplateLoaderTests : IDisposable
         var inline = "line1\nline2";
         var prompt = loader.ResolveOrDefault(PromptTemplateKeys.ExtractGraphUser, inline, "fallback");
 
-        Assert.Equal(inline, prompt);
+        await Assert.That(prompt).IsEqualTo(inline);
     }
 
     public void Dispose()

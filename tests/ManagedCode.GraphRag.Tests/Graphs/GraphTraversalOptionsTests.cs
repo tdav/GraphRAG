@@ -4,24 +4,25 @@ namespace ManagedCode.GraphRag.Tests.Graphs;
 
 public sealed class GraphTraversalOptionsTests
 {
-    [Fact]
-    public void Validate_AllowsPositiveValues()
+    [Test]
+    public async Task Validate_AllowsPositiveValues()
     {
         var options = new GraphTraversalOptions { Skip = 5, Take = 10 };
         options.Validate();
+        await Task.CompletedTask;
     }
 
-    [Fact]
-    public void Validate_ThrowsForNegativeSkip()
+    [Test]
+    public async Task Validate_ThrowsForNegativeSkip()
     {
         var options = new GraphTraversalOptions { Skip = -1 };
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.Validate());
+        await Assert.That(() => options.Validate()).Throws<ArgumentOutOfRangeException>();
     }
 
-    [Fact]
-    public void Validate_ThrowsForNegativeTake()
+    [Test]
+    public async Task Validate_ThrowsForNegativeTake()
     {
         var options = new GraphTraversalOptions { Take = -5 };
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.Validate());
+        await Assert.That(() => options.Validate()).Throws<ArgumentOutOfRangeException>();
     }
 }

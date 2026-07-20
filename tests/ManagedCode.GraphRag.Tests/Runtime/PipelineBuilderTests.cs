@@ -6,8 +6,8 @@ public sealed class PipelineBuilderTests
 {
     private static readonly WorkflowDelegate Noop = (config, context, token) => ValueTask.FromResult(new WorkflowResult(null));
 
-    [Fact]
-    public void Build_CreatesPipelineWithNamedSteps()
+    [Test]
+    public async Task Build_CreatesPipelineWithNamedSteps()
     {
         var pipeline = new PipelineBuilder()
             .Named("demo")
@@ -15,12 +15,12 @@ public sealed class PipelineBuilderTests
             .Step("step2", Noop)
             .Build();
 
-        Assert.Equal("demo", pipeline.Name);
-        Assert.Equal(new[] { "step1", "step2" }, pipeline.Names);
+        await Assert.That(pipeline.Name).IsEqualTo("demo");
+        await Assert.That(pipeline.Names).IsEquivalentTo(new[] { "step1", "step2" });
     }
 
-    [Fact]
-    public void Remove_EliminatesMatchingSteps()
+    [Test]
+    public async Task Remove_EliminatesMatchingSteps()
     {
         var pipeline = new PipelineBuilder()
             .Step("alpha", Noop)
@@ -29,7 +29,7 @@ public sealed class PipelineBuilderTests
 
         pipeline.Remove("alpha");
 
-        Assert.DoesNotContain("alpha", pipeline.Names);
-        Assert.Contains("beta", pipeline.Names);
+        await Assert.That(pipeline.Names).DoesNotContain("alpha");
+        await Assert.That(pipeline.Names).Contains("beta");
     }
 }

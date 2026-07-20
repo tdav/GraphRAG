@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ManagedCode.GraphRag.Tests.Integration;
 
-[Collection(nameof(GraphRagApplicationCollection))]
+[ClassDataSource<GraphRagApplicationFixture>(Shared = SharedType.PerAssembly)]
 public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixture)
 {
     public static IEnumerable<object[]> GraphProviders => GraphStoreTestProviders.ProviderKeys;
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_UpdateExistingNodes(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -27,13 +27,13 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         await store.UpsertNodeAsync(nodeId, label, new Dictionary<string, object?> { ["name"] = "beta", ["score"] = 2 });
 
         var node = await FindNodeAsync(store, nodeId);
-        Assert.NotNull(node);
-        Assert.Equal("beta", node!.Properties["name"]);
-        Assert.Equal(2, Convert.ToInt32(node.Properties["score"], CultureInfo.InvariantCulture));
+        await Assert.That(node).IsNotNull();
+        await Assert.That(node!.Properties["name"]).IsEqualTo("beta");
+        await Assert.That(Convert.ToInt32(node.Properties["score"], CultureInfo.InvariantCulture)).IsEqualTo(2);
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_RemovePropertiesWhenValueIsNull(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -48,15 +48,15 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
 
         await store.UpsertNodeAsync(nodeId, label, new Dictionary<string, object?> { ["nickname"] = "alpha" });
         var node = await FindNodeAsync(store, nodeId);
-        Assert.Equal("alpha", node!.Properties["nickname"]);
+        await Assert.That(node!.Properties["nickname"]).IsEqualTo("alpha");
 
         await store.UpsertNodeAsync(nodeId, label, new Dictionary<string, object?> { ["nickname"] = null });
         var updated = await FindNodeAsync(store, nodeId);
-        Assert.False(updated!.Properties.ContainsKey("nickname"));
+        await Assert.That(updated!.Properties.ContainsKey("nickname")).IsFalse();
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_HandleBidirectionalRelationships(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -83,12 +83,12 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         var outgoingA = await CollectAsync(store.GetOutgoingRelationshipsAsync(a));
         var outgoingB = await CollectAsync(store.GetOutgoingRelationshipsAsync(b));
 
-        Assert.Contains(outgoingA, rel => rel.TargetId == b && rel.Type == "KNOWS");
-        Assert.Contains(outgoingB, rel => rel.TargetId == a && rel.Type == "KNOWS");
+        await Assert.That(outgoingA).Contains(rel => rel.TargetId == b && rel.Type == "KNOWS");
+        await Assert.That(outgoingB).Contains(rel => rel.TargetId == a && rel.Type == "KNOWS");
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_CanCreateAndRetrieveNodes(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -108,13 +108,13 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
 
         await store.UpsertNodeAsync(nodeId, label, props);
         var node = await FindNodeAsync(store, nodeId);
-        Assert.NotNull(node);
-        Assert.Equal(label, node!.Label);
-        Assert.Equal($"name-{providerKey}", node.Properties["name"]);
+        await Assert.That(node).IsNotNull();
+        await Assert.That(node!.Label).IsEqualTo(label);
+        await Assert.That(node.Properties["name"]).IsEqualTo($"name-{providerKey}");
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_CanCreateAndRetrieveRelationships(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -137,16 +137,17 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         });
 
         var outgoing = await CollectAsync(store.GetOutgoingRelationshipsAsync(sourceId));
-        var relationship = Assert.Single(outgoing, rel => rel.TargetId == targetId);
-        Assert.Equal("CONNECTS", relationship.Type);
-        Assert.Equal(providerKey, relationship.Properties["provider"]);
+        await Assert.That(outgoing).HasSingleItem(rel => rel.TargetId == targetId);
+        var relationship = outgoing.Single(rel => rel.TargetId == targetId);
+        await Assert.That(relationship.Type).IsEqualTo("CONNECTS");
+        await Assert.That(relationship.Properties["provider"]).IsEqualTo(providerKey);
 
         var allEdges = await CollectAsync(store.GetRelationshipsAsync());
-        Assert.Contains(allEdges, rel => rel.SourceId == sourceId && rel.TargetId == targetId);
+        await Assert.That(allEdges).Contains(rel => rel.SourceId == sourceId && rel.TargetId == targetId);
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_CanUpsertInBatch(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -168,7 +169,7 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
 
         foreach (var node in nodes)
         {
-            Assert.NotNull(await FindNodeAsync(store, node.Id));
+            await Assert.That(await FindNodeAsync(store, node.Id)).IsNotNull();
         }
 
         var relationships = nodes.Skip(1)
@@ -177,11 +178,11 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
 
         await store.UpsertRelationshipsAsync(relationships);
         var outgoing = await CollectAsync(store.GetOutgoingRelationshipsAsync(nodes[0].Id));
-        Assert.Equal(relationships.Count, outgoing.Count);
+        await Assert.That(outgoing.Count).IsEqualTo(relationships.Count);
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_CanDeleteRelationshipsByRewriting(string providerKey)
     {
         var store = GetStore(providerKey);
@@ -200,16 +201,16 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         await store.UpsertRelationshipAsync(sourceId, targetId, "CONNECTS", new Dictionary<string, object?>());
 
         var initial = await CollectAsync(store.GetOutgoingRelationshipsAsync(sourceId));
-        Assert.Contains(initial, rel => rel.TargetId == targetId);
+        await Assert.That(initial).Contains(rel => rel.TargetId == targetId);
 
         await store.UpsertRelationshipAsync(sourceId, targetId, "CONNECTS", new Dictionary<string, object?> { ["flag"] = "active" });
         var updated = await CollectAsync(store.GetOutgoingRelationshipsAsync(sourceId));
 
-        Assert.Contains(updated, rel => rel.TargetId == targetId && rel.Properties.ContainsKey("flag"));
+        await Assert.That(updated).Contains(rel => rel.TargetId == targetId && rel.Properties.ContainsKey("flag"));
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task GraphStores_HandlePagination(string providerKey)
     {
         var graphStore = GetStore(providerKey);
@@ -229,12 +230,12 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         }
 
         var firstTwo = await CollectAsync(graphStore.GetNodesAsync(new GraphTraversalOptions { Take = 2 }));
-        Assert.Equal(2, firstTwo.Count);
+        await Assert.That(firstTwo.Count).IsEqualTo(2);
 
         var nextTwo = await CollectAsync(graphStore.GetNodesAsync(new GraphTraversalOptions { Skip = 2, Take = 2 }));
-        Assert.Equal(2, nextTwo.Count);
+        await Assert.That(nextTwo.Count).IsEqualTo(2);
 
-        Assert.NotEqual(firstTwo.Select(n => n.Id), nextTwo.Select(n => n.Id));
+        await Assert.That(firstTwo.Select(n => n.Id)).IsNotEquivalentTo(nextTwo.Select(n => n.Id));
 
         var sourceId = nodeIds[0];
         for (var i = 1; i < nodeIds.Count; i++)
@@ -243,11 +244,11 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         }
 
         var pagedEdges = await CollectAsync(graphStore.GetRelationshipsAsync(new GraphTraversalOptions { Take = 2 }));
-        Assert.Equal(2, pagedEdges.Count);
+        await Assert.That(pagedEdges.Count).IsEqualTo(2);
     }
 
-    [Theory]
-    [MemberData(nameof(GraphProviders))]
+    [Test]
+    [MethodDataSource(nameof(GraphProviders))]
     public async Task PostgresGraphStore_PersistsStringPropertiesWithAgtypeParameters(string providerKey)
     {
         if (!string.Equals(providerKey, "postgres", StringComparison.OrdinalIgnoreCase))
@@ -257,7 +258,7 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         }
 
         var store = GetStore(providerKey);
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
         await store!.InitializeAsync();
 
         var label = GraphStoreTestProviders.GetLabel(providerKey);
@@ -271,12 +272,12 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
         });
 
         var stored = await FindNodeAsync(store, nodeId);
-        Assert.NotNull(stored);
-        Assert.Equal(payload, stored!.Properties["content"]?.ToString());
+        await Assert.That(stored).IsNotNull();
+        await Assert.That(stored!.Properties["content"]?.ToString()).IsEqualTo(payload);
     }
 
-    [Fact]
-    [Trait("Category", "Cosmos")]
+    [Test]
+    [Property("Category", "Cosmos")]
     public async Task CosmosGraphStore_RoundTrips_WhenEmulatorAvailable()
     {
         var cosmosStore = fixture.Services.GetKeyedService<IGraphStore>("cosmos");
@@ -300,7 +301,7 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
             relationships.Add(edge);
         }
 
-        Assert.Contains(relationships, rel => rel.TargetId == targetId && rel.Type == "REFERENCES");
+        await Assert.That(relationships).Contains(rel => rel.TargetId == targetId && rel.Type == "REFERENCES");
 
         var nodeIds = new HashSet<string>();
         await foreach (var node in cosmosStore.GetNodesAsync())
@@ -308,8 +309,8 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
             nodeIds.Add(node.Id);
         }
 
-        Assert.Contains(sourceId, nodeIds);
-        Assert.Contains(targetId, nodeIds);
+        await Assert.That(nodeIds).Contains(sourceId);
+        await Assert.That(nodeIds).Contains(targetId);
 
         var edges = new List<GraphRelationship>();
         await foreach (var edge in cosmosStore.GetRelationshipsAsync())
@@ -317,7 +318,7 @@ public sealed class GraphStoreIntegrationTests(GraphRagApplicationFixture fixtur
             edges.Add(edge);
         }
 
-        Assert.Contains(edges, rel => rel.SourceId == sourceId && rel.TargetId == targetId && rel.Type == "REFERENCES");
+        await Assert.That(edges).Contains(rel => rel.SourceId == sourceId && rel.TargetId == targetId && rel.Type == "REFERENCES");
     }
 
     private static async Task<List<T>> CollectAsync<T>(IAsyncEnumerable<T> source)

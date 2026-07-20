@@ -4,8 +4,8 @@ namespace ManagedCode.GraphRag.Tests.Config;
 
 public sealed class ConfigTests
 {
-    [Fact]
-    public void StorageConfig_AllowsCustomValues()
+    [Test]
+    public async Task StorageConfig_AllowsCustomValues()
     {
         var config = new StorageConfig
         {
@@ -17,16 +17,16 @@ public sealed class ConfigTests
             CosmosDbAccountUrl = "https://cosmos.com"
         };
 
-        Assert.Equal(StorageType.Memory, config.Type);
-        Assert.Equal("data", config.BaseDir);
-        Assert.Equal("conn", config.ConnectionString);
-        Assert.Equal("container", config.ContainerName);
-        Assert.Equal("https://example.com", config.StorageAccountBlobUrl);
-        Assert.Equal("https://cosmos.com", config.CosmosDbAccountUrl);
+        await Assert.That(config.Type).IsEqualTo(StorageType.Memory);
+        await Assert.That(config.BaseDir).IsEqualTo("data");
+        await Assert.That(config.ConnectionString).IsEqualTo("conn");
+        await Assert.That(config.ContainerName).IsEqualTo("container");
+        await Assert.That(config.StorageAccountBlobUrl).IsEqualTo("https://example.com");
+        await Assert.That(config.CosmosDbAccountUrl).IsEqualTo("https://cosmos.com");
     }
 
-    [Fact]
-    public void ReportingConfig_AllowsCustomValues()
+    [Test]
+    public async Task ReportingConfig_AllowsCustomValues()
     {
         var config = new ReportingConfig
         {
@@ -37,13 +37,13 @@ public sealed class ConfigTests
             StorageAccountBlobUrl = "https://blob"
         };
 
-        Assert.Equal(ReportingType.Blob, config.Type);
-        Assert.Equal("reports", config.BaseDir);
-        Assert.Equal("conn", config.ConnectionString);
+        await Assert.That(config.Type).IsEqualTo(ReportingType.Blob);
+        await Assert.That(config.BaseDir).IsEqualTo("reports");
+        await Assert.That(config.ConnectionString).IsEqualTo("conn");
     }
 
-    [Fact]
-    public void SnapshotsConfig_StoresFlags()
+    [Test]
+    public async Task SnapshotsConfig_StoresFlags()
     {
         var config = new SnapshotsConfig
         {
@@ -52,13 +52,13 @@ public sealed class ConfigTests
             RawGraph = false
         };
 
-        Assert.True(config.Embeddings);
-        Assert.True(config.GraphMl);
-        Assert.False(config.RawGraph);
+        await Assert.That(config.Embeddings).IsTrue();
+        await Assert.That(config.GraphMl).IsTrue();
+        await Assert.That(config.RawGraph).IsFalse();
     }
 
-    [Fact]
-    public void VectorStoreSchemaConfig_AllowsCustomization()
+    [Test]
+    public async Task VectorStoreSchemaConfig_AllowsCustomization()
     {
         var config = new VectorStoreSchemaConfig
         {
@@ -70,17 +70,17 @@ public sealed class ConfigTests
             IndexName = "index"
         };
 
-        Assert.Equal("id_field", config.IdField);
-        Assert.Equal("vec", config.VectorField);
-        Assert.Equal(42, config.VectorSize);
-        Assert.Equal("index", config.IndexName);
+        await Assert.That(config.IdField).IsEqualTo("id_field");
+        await Assert.That(config.VectorField).IsEqualTo("vec");
+        await Assert.That(config.VectorSize).IsEqualTo(42);
+        await Assert.That(config.IndexName).IsEqualTo("index");
     }
 
-    [Fact]
-    public void GraphRagConfig_InitializesEmptyModelSet()
+    [Test]
+    public async Task GraphRagConfig_InitializesEmptyModelSet()
     {
         var config = new GraphRagConfig();
 
-        Assert.Empty(config.Models);
+        await Assert.That(config.Models).IsEmpty();
     }
 }

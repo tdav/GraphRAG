@@ -9,7 +9,7 @@ namespace ManagedCode.GraphRag.Tests.Storage.Postgres;
 
 public sealed class ServiceCollectionExtensionsTests
 {
-    [Fact]
+    [Test]
     public async Task AddPostgresGraphStore_RegistersKeyedServices()
     {
         var services = new ServiceCollection();
@@ -24,10 +24,10 @@ public sealed class ServiceCollectionExtensionsTests
 
         await using var provider = services.BuildServiceProvider();
         var store = provider.GetRequiredKeyedService<PostgresGraphStore>("primary");
-        Assert.NotNull(store);
+        await Assert.That(store).IsNotNull();
     }
 
-    [Fact]
+    [Test]
     public async Task AddPostgresGraphStore_FirstStoreIsDefault()
     {
         var services = new ServiceCollection();
@@ -45,11 +45,11 @@ public sealed class ServiceCollectionExtensionsTests
         var store = provider.GetRequiredService<PostgresGraphStore>();
         var graphStore = provider.GetRequiredService<IGraphStore>();
 
-        Assert.Same(keyed, store);
-        Assert.Same(store, graphStore);
+        await Assert.That(store).IsSameReferenceAs(keyed);
+        await Assert.That(graphStore).IsSameReferenceAs(store);
     }
 
-    [Fact]
+    [Test]
     public async Task AddPostgresGraphStore_SubsequentStoresDoNotOverrideDefault()
     {
         var services = new ServiceCollection();
@@ -76,13 +76,13 @@ public sealed class ServiceCollectionExtensionsTests
         var secondaryStore = provider.GetRequiredKeyedService<PostgresGraphStore>("secondary");
         var secondaryGraphStore = provider.GetRequiredKeyedService<IGraphStore>("secondary");
 
-        Assert.Same(primaryStore, defaultStore);
-        Assert.Same(defaultStore, graphStore);
-        Assert.NotSame(primaryStore, secondaryStore);
-        Assert.Same(secondaryStore, secondaryGraphStore);
+        await Assert.That(defaultStore).IsSameReferenceAs(primaryStore);
+        await Assert.That(graphStore).IsSameReferenceAs(defaultStore);
+        await Assert.That(secondaryStore).IsNotSameReferenceAs(primaryStore);
+        await Assert.That(secondaryGraphStore).IsSameReferenceAs(secondaryStore);
     }
 
-    [Fact]
+    [Test]
     public async Task AddPostgresGraphStores_RegistersFromConfig()
     {
         var services = new ServiceCollection();
@@ -111,11 +111,11 @@ public sealed class ServiceCollectionExtensionsTests
         await using var provider = services.BuildServiceProvider();
 
         var options = provider.GetRequiredKeyedService<PostgresGraphStoreOptions>("primary");
-        Assert.False(options.AutoCreateIndexes);
-        Assert.Contains("Person", options.VertexPropertyIndexes.Keys);
-        Assert.Contains("KNOWS", options.EdgePropertyIndexes.Keys);
+        await Assert.That(options.AutoCreateIndexes).IsFalse();
+        await Assert.That(options.VertexPropertyIndexes.Keys).Contains("Person");
+        await Assert.That(options.EdgePropertyIndexes.Keys).Contains("KNOWS");
 
         var defaultStore = provider.GetRequiredService<IGraphStore>();
-        Assert.NotNull(defaultStore);
+        await Assert.That(defaultStore).IsNotNull();
     }
 }
