@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace MyGraphRagV5.Vectors;
 
 /// <summary>
@@ -35,4 +37,20 @@ public static class PgVectorNaming
 
     public static string? ResolveText(IReadOnlyDictionary<string, object?> metadata) =>
         metadata.TryGetValue("text", out var value) ? value?.ToString() : null;
+
+    /// <summary>
+    /// Converts a <see cref="JsonElement"/> (as produced by deserializing jsonb into
+    /// <c>Dictionary&lt;string, JsonElement&gt;</c>) into native CLR values, recursively.
+    /// </summary>
+    internal static object? JsonElementToClr(JsonElement element) => element.ValueKind switch
+    {
+        JsonValueKind.String => element.GetString(),
+        JsonValueKind.Number => element.TryGetInt64(out var integral) ? (object)integral : element.GetDouble(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Object => element.EnumerateObject()
+            .ToDictionary(static p => p.Name, static p => JsonElementToClr(p.Value)),
+        JsonValueKind.Array => element.EnumerateArray().Select(JsonElementToClr).ToList(),
+        _ => null,
+    };
 }

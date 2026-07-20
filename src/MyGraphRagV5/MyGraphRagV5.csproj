@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="MyGraphRagV5.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ManagedCode.GraphRag\ManagedCode.GraphRag.csproj" />
     <ProjectReference Include="..\ManagedCode.GraphRag.Postgres\ManagedCode.GraphRag.Postgres.csproj" />
   </ItemGroup>

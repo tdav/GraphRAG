@@ -47,7 +47,7 @@ public sealed class PgVectorStore(NpgsqlDataSource dataSource) : IVectorStore, I
             """;
         command.Parameters.Add(new NpgsqlParameter { Value = id });
         command.Parameters.Add(new NpgsqlParameter { Value = new Vector(embedding) });
-        command.Parameters.Add(new NpgsqlParameter { Value = (object?)text ?? DBNull.Value });
+        command.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Text, Value = (object?)text ?? DBNull.Value });
         command.Parameters.Add(new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = metadataJson });
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -62,16 +62,11 @@ public sealed class PgVectorStore(NpgsqlDataSource dataSource) : IVectorStore, I
         ArgumentException.ThrowIfNullOrWhiteSpace(collection);
 
         var table = PgVectorNaming.TableName(collection);
-        if (!this.ensuredTables.ContainsKey(table))
-        {
-            // Nobody ever upserted into this collection, so the table doesn't exist yet.
-            yield break;
-        }
 
         await using var connection = await this.dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = $"""
-            SELECT id, text, metadata, 1 - (embedding <=> $1) AS score
+            SELECT id, metadata, 1 - (embedding <=> $1) AS score
             FROM {table}
             ORDER BY embedding <=> $1
             LIMIT $2;
@@ -79,19 +74,40 @@ public sealed class PgVectorStore(NpgsqlDataSource dataSource) : IVectorStore, I
         command.Parameters.Add(new NpgsqlParameter { Value = new Vector(embedding) });
         command.Parameters.Add(new NpgsqlParameter { Value = limit });
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        // The table is only created lazily by UpsertAsync. Rather than trust a process-local
+        // "have I ever seen this table" cache (empty after a restart, or on another instance,
+        // or when indexing/querying run in separate processes), ask Postgres directly and
+        // treat "table doesn't exist" (42P01) as an empty result set.
+        NpgsqlDataReader? reader = null;
+        try
         {
-            var id = reader.GetString(0);
-            var score = reader.GetDouble(3);
+            reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UndefinedTable)
+        {
+        }
 
-            // ponytail: System.Text.Json boxes jsonb object values as JsonElement; a richer
-            // conversion to native CLR types can be added later if a caller needs it.
-            var metadata = reader.IsDBNull(2)
-                ? null
-                : JsonSerializer.Deserialize<Dictionary<string, object?>>(reader.GetString(2));
+        if (reader is null)
+        {
+            yield break;
+        }
 
-            yield return new VectorSearchResult(id, score, metadata);
+        await using (reader.ConfigureAwait(false))
+        {
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var id = reader.GetString(0);
+                var score = reader.GetDouble(2);
+
+                var metadata = reader.IsDBNull(1)
+                    ? null
+                    : JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(reader.GetString(1))!
+                        .ToDictionary(
+                            static kvp => kvp.Key,
+                            static kvp => PgVectorNaming.JsonElementToClr(kvp.Value));
+
+                yield return new VectorSearchResult(id, score, metadata);
+            }
         }
     }
 
