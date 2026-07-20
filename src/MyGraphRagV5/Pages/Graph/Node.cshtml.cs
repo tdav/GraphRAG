@@ -12,12 +12,16 @@ namespace MyGraphRagV5.Pages.Graph;
 /// <see cref="IGraphStore"/> has no direct "get node by id" lookup, so the node itself is found by
 /// scanning <c>GetNodesAsync</c> and stopping at the first id match; outgoing relationships use the
 /// direct, non-scanning <c>GetOutgoingRelationshipsAsync(id)</c>.
-/// ponytail: the full scan is fine at the dev/demo scale this viewer targets. Upgrade to a real
-/// GetNodeAsync(id) on IGraphStore (a library change, out of 8c's scope) if this becomes a hot path
-/// on large graphs.
+/// ponytail: the scan is capped at <see cref="MaxNodeScan"/> nodes (via GraphTraversalOptions.Take,
+/// which bounds the underlying SQL query itself) -- it is never unbounded, even for a missing id.
+/// A node beyond the cap will not be found. Upgrade to a real GetNodeAsync(id) on IGraphStore (a
+/// library change, out of 8c's scope) if that becomes a problem.
 /// </summary>
 public sealed class NodeModel(AppDbContext db, IProjectGraphStoreProvider graphStoreProvider) : PageModel
 {
+    /// <summary>Hard cap on how many nodes the id lookup will scan before giving up.</summary>
+    public const int MaxNodeScan = 5000;
+
     private readonly AppDbContext db = db;
     private readonly IProjectGraphStoreProvider graphStoreProvider = graphStoreProvider;
 
@@ -32,6 +36,9 @@ public sealed class NodeModel(AppDbContext db, IProjectGraphStoreProvider graphS
     public GraphNode? Node { get; private set; }
 
     public IReadOnlyList<GraphRelationship> OutgoingRelationships { get; private set; } = [];
+
+    /// <summary>True when the node was not found because the scan hit <see cref="MaxNodeScan"/>, not because it genuinely doesn't exist.</summary>
+    public bool ScanCapReached { get; private set; }
 
     public string? Error { get; private set; }
 
@@ -53,14 +60,18 @@ public sealed class NodeModel(AppDbContext db, IProjectGraphStoreProvider graphS
         {
             var store = await this.graphStoreProvider.GetStoreAsync(this.Project.GraphName, cancellationToken);
 
-            await foreach (var node in store.GetNodesAsync(cancellationToken: cancellationToken))
+            var scanned = 0;
+            await foreach (var node in store.GetNodesAsync(new GraphTraversalOptions { Take = MaxNodeScan }, cancellationToken))
             {
+                scanned++;
                 if (string.Equals(node.Id, this.Id, StringComparison.Ordinal))
                 {
                     this.Node = node;
                     break;
                 }
             }
+
+            this.ScanCapReached = this.Node is null && scanned >= MaxNodeScan;
 
             var relationships = new List<GraphRelationship>();
             await foreach (var relationship in store.GetOutgoingRelationshipsAsync(this.Id, cancellationToken))

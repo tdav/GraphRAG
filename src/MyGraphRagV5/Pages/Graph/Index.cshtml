@@ -66,7 +66,7 @@
                             {
                                 <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
                                     <td class="py-2.5 pr-4">
-                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(node.Id)" class="data-mono text-xs hover:text-accent">@node.Id</a>
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&amp;Id=@Uri.EscapeDataString(node.Id)" class="data-mono text-xs hover:text-accent">@node.Id</a>
                                     </td>
                                     <td class="py-2.5 pr-4">@node.Label</td>
                                     <td class="py-2.5 pr-4 text-xs text-ink-muted">@MyGraphRagV5.Pages.Graph.IndexModel.DescriptionOf(node.Properties)</td>
@@ -111,11 +111,11 @@
                             {
                                 <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
                                     <td class="py-2.5 pr-4">
-                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.SourceId)" class="data-mono text-xs hover:text-accent">@rel.SourceId</a>
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&amp;Id=@Uri.EscapeDataString(rel.SourceId)" class="data-mono text-xs hover:text-accent">@rel.SourceId</a>
                                     </td>
                                     <td class="py-2.5 pr-4 data-mono text-xs">@rel.Type</td>
                                     <td class="py-2.5 pr-4">
-                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&amp;Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
                                     </td>
                                 </tr>
                             }

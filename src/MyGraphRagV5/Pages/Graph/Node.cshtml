@@ -2,9 +2,6 @@
 @model MyGraphRagV5.Pages.Graph.NodeModel
 @{
     ViewData["Title"] = "Узел графа";
-
-    string DescriptionOf(IReadOnlyDictionary<string, object?> properties) =>
-        properties.TryGetValue("description", out var value) && value is not null ? value.ToString()! : "—";
 }
 
 <div class="flex flex-col gap-6">
@@ -20,7 +17,14 @@
     {
         <section class="ember-panel p-6">
             <div class="ember-well p-6 text-center text-ink-muted">
-                <p>Узел не найден.</p>
+                @if (Model.ScanCapReached)
+                {
+                    <p>Узел не найден среди первых @MyGraphRagV5.Pages.Graph.NodeModel.MaxNodeScan узлов.</p>
+                }
+                else
+                {
+                    <p>Узел не найден.</p>
+                }
             </div>
         </section>
     }
@@ -70,9 +74,9 @@
                                 <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
                                     <td class="py-2.5 pr-4 data-mono text-xs">@rel.Type</td>
                                     <td class="py-2.5 pr-4">
-                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&amp;Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
                                     </td>
-                                    <td class="py-2.5 pr-4 text-xs text-ink-muted">@DescriptionOf(rel.Properties)</td>
+                                    <td class="py-2.5 pr-4 text-xs text-ink-muted">@MyGraphRagV5.Pages.Graph.IndexModel.DescriptionOf(rel.Properties)</td>
                                 </tr>
                             }
                         </tbody>
