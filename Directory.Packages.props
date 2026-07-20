@@ -18,7 +18,10 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.0.0" />
+    <!-- Bumped from 10.0.0 -> 10.0.1: minimal version forced by Microsoft.Extensions.AI.OpenAI's dependency (see below). -->
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.0.1-preview.1.25571.5" />
+    <PackageVersion Include="OpenAI" Version="2.7.0" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.10" />
     <PackageVersion Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
     <PackageVersion Include="Microsoft.ML.Tokenizers.Data.O200kBase" Version="2.0.0" />
