@@ -1,0 +1,59 @@
+# Reference environment for MyGraphRagV5.
+#
+# This compose file is NOT required to run the app - the app is configured to talk to
+# an operator-managed Postgres already listening on localhost:6000 (see
+# src/MyGraphRagV5/appsettings.json ConnectionStrings:GraphDb). Use this file only to
+# reproduce/inspect that environment locally (e.g. on a fresh machine), or as a reference
+# for how the real instance is expected to be set up. See docker/README.md for details.
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: postgres-age-pgvector.Dockerfile
+    ports:
+      - "6000:5432"
+    environment:
+      POSTGRES_DB: graphdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: M@y_Passw0rd
+    # AGE must be loaded via shared_preload_libraries, which is a postmaster-context
+    # setting - it can only take effect at server start, not via a config reload/SIGHUP.
+    # Passing it on the postgres command line here guarantees it is preloaded before the
+    # server accepts connections.
+    command: ["postgres", "-c", "shared_preload_libraries=age"]
+    volumes:
+      - postgres-age-pgvector-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d graphdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # NOTE: the `vector` and `age` extensions themselves are NOT created here - the app
+    # creates `vector` via its EF Core migration, and ManagedCode.GraphRag.Postgres's
+    # AgeConnectionManager creates `age` (ag_catalog) on first use. This image only needs
+    # to make both extensions available for CREATE EXTENSION to succeed.
+
+  # Optional: local Text Embeddings Inference server for the embedding model, matching
+  # Tei:EmbedUrl (http://localhost:14401) in appsettings.json. A TEI embedding container
+  # may already be running elsewhere (e.g. on port 42080 as used in some setups) - if so,
+  # skip this service and just point Tei:EmbedUrl at that instance instead.
+  # Enable with: docker compose --profile tei up
+  tei-embed:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
+    profiles: ["tei"]
+    ports:
+      - "14401:80"
+    command: ["--model-id", "BAAI/bge-small-en-v1.5"]
+
+  # Optional: local TEI server for the reranker model, matching Tei:RerankUrl
+  # (http://localhost:18200). Enable with: docker compose --profile tei up
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
+    profiles: ["tei"]
+    ports:
+      - "18200:80"
+    command: ["--model-id", "BAAI/bge-reranker-base"]
+
+volumes:
+  postgres-age-pgvector-data:
