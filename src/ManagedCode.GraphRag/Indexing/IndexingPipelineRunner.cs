@@ -13,7 +13,18 @@ public sealed class IndexingPipelineRunner(IServiceProvider services, IPipelineF
     private readonly IPipelineFactory _pipelineFactory = pipelineFactory ?? throw new ArgumentNullException(nameof(pipelineFactory));
     private readonly PipelineExecutor _executor = executor ?? throw new ArgumentNullException(nameof(executor));
 
-    public async Task<IReadOnlyList<PipelineRunResult>> RunAsync(GraphRagConfig config, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<PipelineRunResult>> RunAsync(GraphRagConfig config, CancellationToken cancellationToken = default)
+    {
+        return RunCoreAsync(config, NoopWorkflowCallbacks.Instance, cancellationToken);
+    }
+
+    public Task<IReadOnlyList<PipelineRunResult>> RunAsync(GraphRagConfig config, IWorkflowCallbacks callbacks, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(callbacks);
+        return RunCoreAsync(config, callbacks, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<PipelineRunResult>> RunCoreAsync(GraphRagConfig config, IWorkflowCallbacks callbacks, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -24,7 +35,6 @@ public sealed class IndexingPipelineRunner(IServiceProvider services, IPipelineF
         var outputStorage = PipelineStorageFactory.Create(config.Output);
         var previousStorage = PipelineStorageFactory.Create(config.UpdateIndexOutput);
         var cache = _services.GetService<IPipelineCache>();
-        var callbacks = NoopWorkflowCallbacks.Instance;
         var stats = new PipelineRunStats();
         var state = new PipelineState();
 
