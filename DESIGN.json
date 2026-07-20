@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "title": "Design System: MyRFS.Admin",
+  "extensions": {
+    "colorMeta": {
+      "ember-orange":       { "role": "primary",  "displayName": "Ember Orange",      "canonical": "#FF6B2C", "tonalRamp": ["#3D1800", "#5A2400", "#7A3300", "#994400", "#BB5500", "#DD6622", "#FF6B2C", "#FF8C42", "#FFB085", "#FFD4BF"] },
+      "ember-orange-light": { "role": "primary",  "displayName": "Ember Orange Light","canonical": "#FF8C42", "tonalRamp": ["#3D2000", "#5A3000", "#7A4200", "#9A5400", "#BB6600", "#DD7822", "#FF8C42", "#FFA66A", "#FFC099", "#FFDDC2"] },
+      "bg-dark":            { "role": "neutral",  "displayName": "Deep Slate",        "canonical": "#2D2D35", "tonalRamp": ["#0A0A10", "#141418", "#1E1E26", "#28282F", "#2D2D35", "#363640", "#3A3A45", "#525260", "#787888", "#A0A0B0"] },
+      "panel-dark":         { "role": "neutral",  "displayName": "Elevated Slate",    "canonical": "#363640", "tonalRamp": ["#0A0A10", "#141418", "#1E1E26", "#28282F", "#2D2D35", "#363640", "#3A3A45", "#525260", "#787888", "#A0A0B0"] },
+      "inset-dark":         { "role": "neutral",  "displayName": "Sunken Void",       "canonical": "#1E1E26", "tonalRamp": ["#050508", "#0A0A10", "#121218", "#1E1E26", "#252530", "#2D2D38", "#363642", "#484858", "#686878", "#909098"] },
+      "surface-dark":       { "role": "neutral",  "displayName": "Mid Slate",         "canonical": "#3A3A45", "tonalRamp": ["#0A0A10", "#141418", "#1E1E26", "#2D2D35", "#363640", "#3A3A45", "#484855", "#606070", "#808090", "#A8A8B8"] },
+      "bg-light":           { "role": "neutral",  "displayName": "Cool Mist",         "canonical": "#F0F0F5", "tonalRamp": ["#28282F", "#3A3A42", "#505058", "#686870", "#888892", "#AAAAB2", "#C8C8D0", "#DCDCE4", "#ECECF2", "#F0F0F5"] },
+      "panel-light":        { "role": "neutral",  "displayName": "Pure Panel",        "canonical": "#FFFFFF", "tonalRamp": ["#303030", "#484848", "#606060", "#808080", "#A0A0A0", "#C0C0C0", "#D8D8D8", "#EBEBEB", "#F5F5F5", "#FFFFFF"] },
+      "inset-light":        { "role": "neutral",  "displayName": "Recessed",          "canonical": "#E4E4EC", "tonalRamp": ["#28282F", "#38383F", "#505058", "#686870", "#888892", "#ACACB4", "#C4C4CC", "#D4D4DC", "#DCDCE4", "#E4E4EC"] },
+      "text-primary-dark":  { "role": "neutral",  "displayName": "Stark White",       "canonical": "#FFFFFF", "tonalRamp": ["#303030", "#484848", "#606060", "#808080", "#A0A0A0", "#C0C0C0", "#D8D8D8", "#EBEBEB", "#F5F5F5", "#FFFFFF"] },
+      "text-primary-light": { "role": "neutral",  "displayName": "Deep Navy",         "canonical": "#1A1A2E", "tonalRamp": ["#0A0A18", "#121220", "#1A1A2E", "#28283C", "#383850", "#505068", "#707088", "#9090A8", "#B0B0C8", "#D0D0E0"] },
+      "text-secondary":     { "role": "neutral",  "displayName": "Steel Mist",        "canonical": "#8A8A9A", "tonalRamp": ["#202030", "#303040", "#484858", "#606070", "#787888", "#8A8A9A", "#A0A0B0", "#B8B8C8", "#CECEDE", "#E4E4F0"] },
+      "text-muted":         { "role": "neutral",  "displayName": "Faded Ash",         "canonical": "#7D7D8A", "tonalRamp": ["#1E1E28", "#2E2E38", "#464650", "#5E5E68", "#707080", "#7D7D8A", "#9A9AA8", "#B4B4C0", "#CACACC", "#E0E0E8"] },
+      "sem-success":        { "role": "semantic", "displayName": "Success Green",     "canonical": "#4ADE80", "tonalRamp": ["#003018", "#005028", "#00783E", "#009A52", "#20BC68", "#38D078", "#4ADE80", "#70E89A", "#9AF0B8", "#C4F8D4"] },
+      "sem-warning":        { "role": "semantic", "displayName": "Warning Amber",     "canonical": "#FFB02E", "tonalRamp": ["#3D2800", "#5A3C00", "#7A5200", "#9A6A00", "#BB8800", "#DDA000", "#FFB02E", "#FFC55E", "#FFDAA0", "#FFEECC"] },
+      "sem-danger":         { "role": "semantic", "displayName": "Alert Red",         "canonical": "#FF4D4D", "tonalRamp": ["#3D0000", "#620000", "#880000", "#A80000", "#CC1010", "#EE2222", "#FF4D4D", "#FF7070", "#FF9999", "#FFCCCC"] },
+      "sem-info":           { "role": "semantic", "displayName": "Data Blue",         "canonical": "#4DA6FF", "tonalRamp": ["#001840", "#002C6A", "#00439A", "#0055BB", "#1A70DD", "#3390FF", "#4DA6FF", "#80BFFF", "#AACFFF", "#D4E8FF"] },
+      "sem-muted":          { "role": "semantic", "displayName": "Muted Grey",        "canonical": "#6B7280", "tonalRamp": ["#1A1C20", "#282C32", "#38404A", "#505864", "#606870", "#6B7280", "#848E9A", "#A0AAB4", "#BEC8D0", "#D8E0E8"] }
+    },
+    "semanticRoles": {
+      "sem-success": { "file": "Stored / Verified (CRC32C совпал)",        "logLevel": null,            "health": "Online / Healthy" },
+      "sem-warning": { "file": "Хранилище близко к заполнению",            "logLevel": "WARN",          "health": "Degraded" },
+      "sem-danger":  { "file": "Corrupted (DATA_LOSS) / блоб отсутствует", "logLevel": "ERROR / FATAL", "health": "Offline / Down" },
+      "sem-info":    { "file": "Uploading / Receiving",                    "logLevel": "INFO",          "health": null },
+      "sem-muted":   { "file": "Storage disabled / архивный",              "logLevel": "DEBUG / TRACE", "health": "Disabled" }
+    },
+    "typographyMeta": {
+      "title":    { "displayName": "Title",    "purpose": "Заголовки страниц и крупных секций." },
+      "headline": { "displayName": "Headline", "purpose": "Подзаголовки разделов, названия карточек метрик." },
+      "body":     { "displayName": "Body",     "purpose": "Основной текст UI, строки таблицы файлов." },
+      "label":    { "displayName": "Label",    "purpose": "Метки полей, заголовки колонок, теги типов файлов." },
+      "mono":     { "displayName": "Mono",     "purpose": "Путь, размер, CRC32C, file GUID, timestamp — JetBrains Mono." }
+    },
+    "shadows": [
+      { "name": "overlay",     "value": "0 8px 24px rgba(0,0,0,0.35)",      "purpose": "Диалоги, dropdown-меню, date-picker — элементы, парящие над контентом. Единственный разрешённый класс теней вместе с overlay-sm и accent-glow." },
+      { "name": "overlay-sm",  "value": "0 4px 12px rgba(0,0,0,0.25)",      "purpose": "Tooltip, popover, toast." },
+      { "name": "accent-glow", "value": "0 2px 8px rgba(255,107,44,0.3)",   "purpose": "Свечение accent-кнопки; hover усиливает до 0 4px 12px rgba(255,107,44,0.4)." }
+    ],
+    "borders": [
+      { "name": "hairline-dark",        "value": "1px solid rgba(255,255,255,0.08)", "purpose": "Границы поверхностей и разделители строк в тёмной теме." },
+      { "name": "hairline-strong-dark", "value": "1px solid rgba(255,255,255,0.14)", "purpose": "Hover-границы контролов в тёмной теме." },
+      { "name": "hairline-light",       "value": "1px solid rgba(26,26,46,0.10)",    "purpose": "Границы поверхностей и разделители строк в светлой теме." },
+      { "name": "hairline-strong-light","value": "1px solid rgba(26,26,46,0.18)",    "purpose": "Hover-границы контролов в светлой теме." }
+    ],
+    "motion": [
+      { "name": "fast",   "value": "150ms ease", "purpose": "Hover-эффекты, показ/скрытие небольших элементов." },
+      { "name": "normal", "value": "250ms ease", "purpose": "Смена темы, раскрытие строки файла, переходы кнопок." },
+      { "name": "slow",   "value": "400ms ease", "purpose": "Sidebar collapse, крупные layout-изменения." }
+    ],
+    "breakpoints": [
+      { "name": "sm",  "value": "640px" },
+      { "name": "md",  "value": "768px" },
+      { "name": "lg",  "value": "1024px" },
+      { "name": "xl",  "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button Default",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Плоская кнопка для вторичных действий: panel-фон и hairline-граница, без теней.",
+      "html": "<button class=\"ds-btn-default\">Применить</button>",
+      "css": ".ds-btn-default { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: #363640; color: #FFFFFF; transition: background 150ms ease, border-color 150ms ease; min-height: 36px; white-space: nowrap; user-select: none; } .ds-btn-default:hover:not(:disabled) { background: #3A3A45; border-color: rgba(255,255,255,0.14); } .ds-btn-default:active:not(:disabled) { background: #2D2D35; } .ds-btn-default:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; } .ds-btn-default:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Button Accent",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Основная CTA-кнопка. Ember Orange градиент с accent-glow. Используется максимум один раз на экране (Проверить целостность, Скачать файл).",
+      "html": "<button class=\"ds-btn-accent\">Проверить целостность</button>",
+      "css": ".ds-btn-accent { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 8px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: linear-gradient(135deg, #FF6B2C 0%, #FF8C42 100%); color: #FFFFFF; box-shadow: 0 2px 8px rgba(255,107,44,0.3); transition: box-shadow 150ms ease, filter 150ms ease; min-height: 36px; white-space: nowrap; user-select: none; } .ds-btn-accent:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(255,107,44,0.4); filter: brightness(1.05); } .ds-btn-accent:active:not(:disabled) { box-shadow: 0 1px 4px rgba(255,107,44,0.3); filter: brightness(0.95); } .ds-btn-accent:focus-visible { outline: 2px solid #FF8C42; outline-offset: 2px; } .ds-btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Button Ghost",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Прозрачная кнопка для вторичных действий рядом с accent.",
+      "html": "<button class=\"ds-btn-ghost\">Отмена</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border: 1px solid transparent; border-radius: 8px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; background: transparent; color: #8A8A9A; transition: background 150ms ease, color 150ms ease; min-height: 36px; white-space: nowrap; user-select: none; } .ds-btn-ghost:hover:not(:disabled) { background: rgba(255,107,44,0.12); color: #FFFFFF; } .ds-btn-ghost:active:not(:disabled) { background: rgba(255,107,44,0.16); } .ds-btn-ghost:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; } .ds-btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Плоское поле ввода: well-фон + hairline-граница, focus подсвечивает границу акцентом.",
+      "html": "<div class=\"ds-input-wrap\"><span class=\"ds-input-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\"><circle cx=\"7\" cy=\"7\" r=\"5\" stroke=\"#8A8A9A\" stroke-width=\"1.5\"/><path d=\"M11 11L14 14\" stroke=\"#8A8A9A\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg></span><input class=\"ds-input-field\" type=\"text\" placeholder=\"Поиск по пути, типу, региону...\"/></div>",
+      "css": ".ds-input-wrap { display: flex; align-items: center; gap: 8px; background: #1E1E26; border-radius: 8px; padding: 0 16px; min-height: 36px; border: 1px solid rgba(255,255,255,0.08); transition: border-color 150ms ease; } .ds-input-wrap:focus-within { border-color: #FF6B2C; } .ds-input-icon { display: flex; align-items: center; flex-shrink: 0; } .ds-input-field { flex: 1; background: transparent; border: none; outline: none; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 400; color: #FFFFFF; line-height: 1.5; } .ds-input-field::placeholder { color: #7D7D8A; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Плоская карточка для метрик хранилища: panel-фон + hairline-граница, без теней.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">Файлов за сутки</p><p class=\"ds-card-value\">142 837</p></div>",
+      "css": ".ds-card { background: #363640; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; } .ds-card-label { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 500; color: #8A8A9A; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 8px; } .ds-card-value { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 1.5rem; font-weight: 600; color: #FFFFFF; line-height: 1.3; }"
+    },
+    {
+      "name": "File Status Badge",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Pill-тег статуса файла. Цвет несёт семантическую нагрузку, всегда с текстовой меткой.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge--success\">Stored</span><span class=\"ds-badge ds-badge--info\">Uploading</span><span class=\"ds-badge ds-badge--danger\">Corrupted</span><span class=\"ds-badge ds-badge--muted\">Disabled</span></div>",
+      "css": ".ds-badges { display: flex; gap: 8px; flex-wrap: wrap; } .ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; white-space: nowrap; } .ds-badge--success { color: #4ADE80; background: rgba(74,222,128,0.12); } .ds-badge--warning { color: #FFB02E; background: rgba(255,176,46,0.12); } .ds-badge--danger { color: #FF4D4D; background: rgba(255,77,77,0.12); } .ds-badge--info { color: #4DA6FF; background: rgba(77,166,255,0.10); } .ds-badge--muted { color: #6B7280; background: rgba(107,114,128,0.14); }"
+    },
+    {
+      "name": "File Row",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Строка таблицы файлов — центральный компонент системы. Фиксированная высота 44px для виртуального скролла.",
+      "html": "<div class=\"ds-file-row\"><span class=\"ds-file-badge ds-file-badge--danger\">Corrupted</span><span class=\"ds-file-timestamp\">2026-07-02 14:32:07.441</span><span class=\"ds-file-type\">images</span><span class=\"ds-file-path\">images/2026/07/02/14/0197f3a2c41e7d9a.jpg</span><span class=\"ds-file-region\">14</span><span class=\"ds-file-size\">12.4 MB</span><span class=\"ds-file-crc ds-file-crc--danger\">E3069283</span></div>",
+      "css": ".ds-file-row { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 16px; background: transparent; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 150ms ease; cursor: pointer; overflow: hidden; } .ds-file-row:hover { background: rgba(58,58,69,0.6); } .ds-file-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; flex-shrink: 0; } .ds-file-badge--danger { color: #FF4D4D; background: rgba(255,77,77,0.12); } .ds-file-badge--success { color: #4ADE80; background: rgba(74,222,128,0.12); } .ds-file-timestamp { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.75rem; color: #8A8A9A; flex-shrink: 0; width: 180px; } .ds-file-type { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.75rem; font-weight: 500; color: #8A8A9A; flex-shrink: 0; width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-file-path { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.8125rem; color: #FFFFFF; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-file-region { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.75rem; color: #8A8A9A; flex-shrink: 0; width: 40px; text-align: right; } .ds-file-size { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.75rem; color: #8A8A9A; flex-shrink: 0; width: 72px; text-align: right; } .ds-file-crc { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.8125rem; flex-shrink: 0; width: 88px; text-align: right; } .ds-file-crc--danger { color: #FF4D4D; } .ds-file-crc--success { color: #4ADE80; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Элемент сайдбара навигации. Ghost в покое, orange-tinted active.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/></svg><span>Дашборд</span></a><a class=\"ds-nav-item ds-nav-item--active\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z\"/><path d=\"M13 2v7h7\"/></svg><span>Файлы</span></a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; padding: 8px; } .ds-nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; text-decoration: none; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.875rem; font-weight: 500; color: #8A8A9A; background: transparent; transition: background 150ms ease, color 150ms ease; } .ds-nav-item:hover { background: rgba(255,107,44,0.08); color: #FFFFFF; } .ds-nav-item--active { background: rgba(255,107,44,0.12); color: #FF6B2C; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precision Instrument",
+    "overview": "MyRFS.Admin — диспетчерский пульт файлового хранилища, а не витрина. Как осциллограф или спектральный анализатор, система существует ради данных, которые через неё проходят: файлы, их целостность, хранилища и их заполнение. Визуальный язык сдержан намеренно: плоские тональные поверхности, разделённые hairline-границами 1px, единственный хроматический акцент — Ember Orange — зарезервирован строго для действий и интерактивных элементов. Всё остальное — нейтрально, чтобы статус файла читался мгновенно.\n\nСистема поддерживает два полноценных визуальных режима: тёмная тема для дежурного наблюдения за потоком загрузок; светлая — для разбора инцидентов и отчётов. Оба режима сохраняют полную семантику и иерархию.\n\nСистема отвергает четыре паттерна: шаблонные Bootstrap/Material admin-панели с их серо-синей безликостью; перегруженные дашборды без иерархии; retro-терминальную эстетику с зелёным текстом на чёрном; neumorphism в любом виде — парные тени и «выдавленные» поверхности запрещены полностью.",
+    "keyCharacteristics": [
+      "Плоская elevation: тональные уровни фона + hairline-границы 1px; box-shadow только у overlay-элементов",
+      "Единственный акцент: Ember Orange используется строго для интерактивных элементов",
+      "Семантические цвета: статус файла (Stored, Uploading, Corrupted, Disabled) читается мгновенно по цвету",
+      "Моноширинная типографика для технических значений: путь, размер, CRC32C, GUID, timestamp",
+      "Две полноценные темы с идентичной семантикой"
+    ],
+    "rules": [
+      { "name": "The One Voice Rule",            "body": "Ember Orange — единственный хроматический брендовый цвет на любом экране. Его редкость — это его смысл. Любое использование оранжевого сигнализирует: 'здесь можно действовать'.",                                                  "section": "colors" },
+      { "name": "The Semantic Immutability Rule", "body": "Пять семантических ролей (success, warning, danger, info, muted) принадлежат исключительно статусам файлов, уровням логов и здоровью сервисов. Нельзя использовать эти цвета для брендинга, декора или произвольных состояний. Статус всегда дублируется текстом.", "section": "colors" },
+      { "name": "The Mono-for-Data Rule",         "body": "Любое значение, которое читается посимвольно — путь файла, размер, CRC32C, file/trace GUID, timestamp с миллисекундами — рендерится JetBrains Mono. Никогда не смешивать Inter и JetBrains Mono для одного токена данных.", "section": "typography" },
+      { "name": "The Hairline Rule",              "body": "Разделение соседних поверхностей — только тональным контрастом фона и границей 1px. Статичные поверхности (карточки, панели, поля, кнопки в покое) не имеют box-shadow вообще.",                                       "section": "elevation" },
+      { "name": "The Overlay-Only Shadow Rule",   "body": "Box-shadow допустим только у элементов, временно перекрывающих контент (диалог, dropdown, tooltip, toast), и у accent-glow. Любая другая тень — включая любые inset-тени и парные neumorphic-тени — нарушение системы.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do использовать Ember Orange (#FF6B2C) только для интерактивных элементов: primary-кнопок, активных состояний навигации, focus-колец.",
+      "Do рендерить все технические значения (путь, размер, CRC32C, GUID, timestamp с миллисекундами) в JetBrains Mono.",
+      "Do разделять поверхности тональным контрастом и hairline-границей 1px; box-shadow только у overlay-элементов и accent-glow.",
+      "Do поддерживать оба визуальных режима (dark/light). Каждый новый компонент обязан использовать CSS-переменные.",
+      "Do соблюдать WCAG AA: минимум 4.5:1 для обычного текста, 3:1 для крупного текста и интерактивных элементов.",
+      "Do применять семантические роли строго по назначению и дублировать статус текстом, не только цветом.",
+      "Do использовать prefers-reduced-motion — отключать все transition и animation, сохраняя функциональность."
+    ],
+    "donts": [
+      "Don't использовать neumorphism ни в каком виде: парные светло-тёмные тени, inset-тени, 'выдавленные'/'вдавленные' поверхности. Прямой запрет проекта.",
+      "Don't использовать border-left или border-right больше 1px как цветной акцент на карточках или строках файлов.",
+      "Don't воспроизводить Bootstrap/Material шаблонный подход: серо-синие панели без характера.",
+      "Don't перегружать экраны виджетами без иерархии — нарушение принципа 'Статус прежде всего'.",
+      "Don't применять background-clip: text с градиентом.",
+      "Don't использовать glassmorphism (backdrop-filter + rgba blur) как декорацию.",
+      "Don't использовать sem-success (#4ADE80) для чего-либо кроме статуса Stored/Verified и online-здоровья.",
+      "Don't создавать вложенные карточки. Используйте well-секции (inset-фон + hairline).",
+      "Don't добавлять кнопку удаления файла — хранилище append-only, файлы не удаляются.",
+      "Don't добавлять анимированные иллюстрации, яркие градиентные фоны, emoji в UI, скругления >24px на контейнерах."
+    ]
+  }
+}
