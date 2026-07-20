@@ -28,6 +28,7 @@
     <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="DotNet.ReproducibleBuilds" Version="1.2.39" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Pgvector" Version="0.3.2" />
     <PackageVersion Include="Testcontainers.CosmosDb" Version="4.9.0" />
     <PackageVersion Include="Testcontainers.JanusGraph" Version="4.9.0" />
     <PackageVersion Include="Testcontainers.Neo4j" Version="4.9.0" />
