@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>MyGraphRagV5</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <UserSecretsId>mygraphragv5</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ManagedCode.GraphRag\ManagedCode.GraphRag.csproj" />
+    <ProjectReference Include="..\ManagedCode.GraphRag.Postgres\ManagedCode.GraphRag.Postgres.csproj" />
+  </ItemGroup>
+
+</Project>

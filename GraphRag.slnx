@@ -20,9 +20,11 @@
     <Project Path="src/ManagedCode.GraphRag.Neo4j/ManagedCode.GraphRag.Neo4j.csproj" />
     <Project Path="src/ManagedCode.GraphRag.Postgres/ManagedCode.GraphRag.Postgres.csproj" />
     <Project Path="src/ManagedCode.GraphRag/ManagedCode.GraphRag.csproj" />
+    <Project Path="src/MyGraphRagV5/MyGraphRagV5.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ManagedCode.GraphRag.Tests/ManagedCode.GraphRag.Tests.csproj" />
+    <Project Path="tests/MyGraphRagV5.Tests/MyGraphRagV5.Tests.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/ManagedCode.GraphRag.Benchmarks/ManagedCode.GraphRag.Benchmarks.csproj" />
