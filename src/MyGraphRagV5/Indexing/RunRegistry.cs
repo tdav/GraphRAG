@@ -39,7 +39,10 @@ public sealed class RunRegistry : IRunProgressSink
     public RunProgress? GetProgress(Guid runId)
         => this.runs.TryGetValue(runId, out var handle) ? handle.SnapshotProgress() : null;
 
-    /// <summary>Requests cancellation of a run. Returns <c>false</c> if the run is unknown.</summary>
+    /// <summary>
+    /// Requests cancellation of a run. Returns <c>false</c> if the run is unknown, or if it just
+    /// finished and disposed its <see cref="CancellationTokenSource"/> concurrently with this call.
+    /// </summary>
     public bool CancelRun(Guid runId)
     {
         if (!this.runs.TryGetValue(runId, out var handle))
@@ -47,7 +50,18 @@ public sealed class RunRegistry : IRunProgressSink
             return false;
         }
 
-        handle.Cts.Cancel();
+        try
+        {
+            handle.Cts.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // The background task's finally block (Remove + Cts.Dispose) can race ahead of us between
+            // TryGetValue above and Cancel here. The run already finished, so there is nothing left to
+            // cancel; treat it as a no-op rather than letting the exception surface to the HTTP caller.
+            return false;
+        }
+
         return true;
     }
 

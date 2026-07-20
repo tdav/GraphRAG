@@ -30,8 +30,27 @@ public sealed class ProjectGraphStoreProvider(IConfiguration configuration, ILog
             graphName,
             name => new Lazy<Task<PostgresGraphStore>>(() => this.CreateAndInitializeAsync(name)));
 
-        return await lazy.Value.ConfigureAwait(false);
+        try
+        {
+            return await lazy.Value.ConfigureAwait(false);
+        }
+        catch
+        {
+            // Lazy<Task<T>> caches a faulted task forever once InitializeAsync throws (e.g. a
+            // transient DB error), poisoning this graph name for the process lifetime. Evict the
+            // entry so the next call retries. Remove only this exact Lazy instance (key+value match)
+            // so a concurrent caller that already replaced it with a fresh retry isn't clobbered.
+            ((ICollection<KeyValuePair<string, Lazy<Task<PostgresGraphStore>>>>)this.stores)
+                .Remove(new KeyValuePair<string, Lazy<Task<PostgresGraphStore>>>(graphName, lazy));
+            throw;
+        }
     }
+
+    // note: a hermetic unit test for this eviction path would require adding a store-factory seam to
+    // ProjectGraphStoreProvider purely for testability (CreateAndInitializeAsync always constructs a
+    // real PostgresGraphStore and calls its InitializeAsync, which needs a live Postgres/AGE
+    // connection). That seam isn't otherwise needed by the codebase, so it is skipped here per
+    // Task 6 scope; this fix relies on Task 10's integration coverage against a real database.
 
     private async Task<PostgresGraphStore> CreateAndInitializeAsync(string graphName)
     {

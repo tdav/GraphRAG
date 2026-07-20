@@ -77,6 +77,35 @@ public class RunRegistryTests
     }
 
     [Fact]
+    public void CancelRun_ReturnsFalseForAlreadyRemovedRun()
+    {
+        var registry = new RunRegistry();
+        var runId = Guid.NewGuid();
+        using var cts = new CancellationTokenSource();
+        registry.TryRegister(runId, Guid.NewGuid(), cts);
+        registry.Remove(runId);
+
+        Assert.False(registry.CancelRun(runId));
+    }
+
+    [Fact]
+    public void CancelRun_HandlesCtsDisposedConcurrentlyWithFinish_WithoutThrowing()
+    {
+        // Simulates the race in IndexingService.RunPipelineAsync's finally block: the background task
+        // can dispose the run's CTS between CancelRun's TryGetValue and its Cancel() call, once the
+        // handle is still registered but the token source is already gone.
+        var registry = new RunRegistry();
+        var runId = Guid.NewGuid();
+        var cts = new CancellationTokenSource();
+        registry.TryRegister(runId, Guid.NewGuid(), cts);
+        cts.Dispose();
+
+        var cancelled = registry.CancelRun(runId);
+
+        Assert.False(cancelled);
+    }
+
+    [Fact]
     public void Update_StoresLatestWorkflowAndProgress_Retrievable()
     {
         var registry = new RunRegistry();
