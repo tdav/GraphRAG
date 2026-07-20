@@ -1,0 +1,121 @@
+@page "{id:guid}"
+@model MyGraphRagV5.Pages.Projects.DetailsModel
+@{
+    ViewData["Title"] = Model.Project.Name;
+    var startDisabled = Model.ActiveRun is { IsTerminal: false };
+}
+
+<div class="flex flex-col gap-6">
+    <section class="ember-panel p-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold">@Model.Project.Name</h2>
+                <p class="mt-1 data-mono text-xs">@Model.Project.SourceFolder</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="/Projects/Edit/@Model.Project.Id" class="btn-default">Изменить</a>
+                <form method="post" onsubmit="return confirm('Удалить проект? Строки в базе приложения будут удалены; граф и векторная коллекция в хранилище останутся.');">
+                    <button type="submit" asp-page-handler="Delete" class="btn-default">Удалить</button>
+                </form>
+                <form method="post" class="inline">
+                    <button type="button"
+                            class="btn-default"
+                            style="border-color: var(--color-accent); color: var(--color-accent);"
+                            hx-post="/Projects/Details/@Model.Project.Id?handler=Start"
+                            hx-target="#run-progress-container"
+                            hx-swap="innerHTML"
+                            disabled="@(startDisabled ? "disabled" : null)">
+                        Запустить индексацию
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <dt class="text-xs uppercase tracking-wide text-ink-muted">Граф (GraphName)</dt>
+                <dd class="data-mono text-sm">@Model.Project.GraphName</dd>
+            </div>
+            <div>
+                <dt class="text-xs uppercase tracking-wide text-ink-muted">Векторная коллекция</dt>
+                <dd class="data-mono text-sm">@Model.Project.VectorCollection</dd>
+            </div>
+            <div>
+                <dt class="text-xs uppercase tracking-wide text-ink-muted">Шаблон файлов</dt>
+                <dd class="data-mono text-sm">@Model.Project.FilePattern</dd>
+            </div>
+            <div>
+                <dt class="text-xs uppercase tracking-wide text-ink-muted">Создан</dt>
+                <dd class="data-mono text-sm">@Model.Project.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+            </div>
+            @if (Model.Project.EmbeddingDimension is { } dim)
+            {
+                <div>
+                    <dt class="text-xs uppercase tracking-wide text-ink-muted">Размерность эмбеддингов</dt>
+                    <dd class="data-mono text-sm">@dim</dd>
+                </div>
+            }
+            <div>
+                <dt class="text-xs uppercase tracking-wide text-ink-muted">Id</dt>
+                <dd class="data-mono text-xs">@Model.Project.Id</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="ember-panel p-6">
+        <h2 class="text-base font-semibold">Индексация</h2>
+        <div id="run-progress-container" class="mt-4">
+            @if (Model.ActiveRun is not null)
+            {
+                <partial name="_RunProgress" model="Model.ActiveRun" />
+            }
+            else
+            {
+                <p class="text-sm text-ink-muted">Нет активного запуска.</p>
+            }
+        </div>
+    </section>
+
+    <section class="ember-panel p-6">
+        <h2 class="text-base font-semibold">История запусков</h2>
+        @if (Model.Runs.Count == 0)
+        {
+            <div class="ember-well mt-4 p-6 text-center text-ink-muted">
+                <p>Запусков ещё не было.</p>
+            </div>
+        }
+        else
+        {
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="border-b border-hairline text-xs uppercase tracking-wide text-ink-muted">
+                            <th class="py-2 pr-4 font-medium">Статус</th>
+                            <th class="py-2 pr-4 font-medium">Начат</th>
+                            <th class="py-2 pr-4 font-medium">Завершён</th>
+                            <th class="py-2 pr-4 font-medium">Документы</th>
+                            <th class="py-2 pr-4 font-medium">Ошибка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var run in Model.Runs)
+                        {
+                            var (cssClass, label) = StatusBadge.ForRunStatus(run.Status);
+                            var error = run.Error;
+                            var truncatedError = string.IsNullOrEmpty(error)
+                                ? "—"
+                                : (error.Length > 60 ? error[..60] + "…" : error);
+                            <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
+                                <td class="py-2.5 pr-4"><span class="@cssClass">@label</span></td>
+                                <td class="py-2.5 pr-4 data-mono text-xs">@run.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="py-2.5 pr-4 data-mono text-xs">@(run.CompletedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</td>
+                                <td class="py-2.5 pr-4 data-mono text-xs">@(run.DocumentCount?.ToString() ?? "—")</td>
+                                <td class="py-2.5 pr-4 text-xs text-danger" title="@error">@truncatedError</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

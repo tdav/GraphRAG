@@ -1,0 +1,51 @@
+@model MyGraphRagV5.Pages.Projects.RunProgressViewModel
+@{
+    var (badgeClass, badgeLabel) = StatusBadge.ForRunStatus(Model.Status);
+    var percent = Model is { TotalItems: > 0, CompletedItems: not null }
+        ? (int)Math.Clamp(100.0 * Model.CompletedItems.Value / Model.TotalItems.Value, 0, 100)
+        : (int?)null;
+}
+<div id="run-progress"
+     class="ember-well p-4"
+     hx-get="@(Model.IsTerminal ? null : $"/Projects/Progress?runId={Model.RunId}")"
+     hx-trigger="@(Model.IsTerminal ? null : "every 2s")"
+     hx-target="@(Model.IsTerminal ? null : "this")"
+     hx-swap="@(Model.IsTerminal ? null : "outerHTML")">
+    <div class="flex items-center justify-between gap-3">
+        <span class="@badgeClass">@badgeLabel</span>
+        @if (!Model.IsTerminal && Model.CurrentWorkflow is { } workflow)
+        {
+            <span class="data-mono text-xs">@workflow</span>
+        }
+    </div>
+
+    @if (!Model.IsTerminal)
+    {
+        <div class="mt-3">
+            @if (percent is { } p)
+            {
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface">
+                    <div class="h-full rounded-full bg-accent" style="width: @(p)%;"></div>
+                </div>
+                <p class="mt-1.5 data-mono text-xs">@Model.CompletedItems / @Model.TotalItems (@p%)</p>
+            }
+            else
+            {
+                <p class="text-xs text-ink-muted">Ожидание прогресса&hellip;</p>
+            }
+        </div>
+
+        <form method="post" class="mt-3">
+            <button type="button" class="btn-default"
+                    hx-post="/Projects/Progress?handler=Cancel&runId=@Model.RunId"
+                    hx-target="#run-progress"
+                    hx-swap="outerHTML">
+                Отмена
+            </button>
+        </form>
+    }
+    else if (Model.Status == IndexingRunStatus.Failed && !string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <p class="mt-3 text-xs text-danger">@Model.Error</p>
+    }
+</div>

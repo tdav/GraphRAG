@@ -1,0 +1,36 @@
+@page
+@model MyGraphRagV5.Pages.Projects.CreateModel
+@{
+    ViewData["Title"] = "Новый проект";
+}
+
+<div class="mx-auto max-w-xl">
+    <section class="ember-panel p-6">
+        <h2 class="text-lg font-semibold">Новый проект</h2>
+
+        <form method="post" class="mt-6 flex flex-col gap-4">
+            <div>
+                <label asp-for="Input.Name" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Название</label>
+                <input asp-for="Input.Name" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm text-ink" autocomplete="off" />
+                <span asp-validation-for="Input.Name" class="mt-1 block text-xs text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.SourceFolder" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Исходная папка</label>
+                <input asp-for="Input.SourceFolder" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm data-mono" placeholder="C:\path\to\source" autocomplete="off" />
+                <span asp-validation-for="Input.SourceFolder" class="mt-1 block text-xs text-danger"></span>
+                <p class="mt-1 text-xs text-ink-muted">Путь на сервере, где запущено приложение. Существование папки не проверяется при сохранении.</p>
+            </div>
+
+            <div>
+                <label asp-for="Input.FilePattern" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Шаблон файлов (regex)</label>
+                <input asp-for="Input.FilePattern" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm data-mono" autocomplete="off" />
+            </div>
+
+            <div class="mt-2 flex justify-end gap-2">
+                <a href="/Projects" class="btn-default">Отмена</a>
+                <button type="submit" class="btn-default" style="border-color: var(--color-accent); color: var(--color-accent);">Создать</button>
+            </div>
+        </form>
+    </section>
+</div>

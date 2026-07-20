@@ -1,0 +1,43 @@
+@page "{id:guid}"
+@model MyGraphRagV5.Pages.Projects.EditModel
+@{
+    ViewData["Title"] = "Изменить проект";
+}
+
+<div class="mx-auto max-w-xl">
+    <section class="ember-panel p-6">
+        <h2 class="text-lg font-semibold">Изменить проект</h2>
+
+        <form method="post" class="mt-6 flex flex-col gap-4">
+            <input type="hidden" asp-for="Input.Id" />
+
+            <div>
+                <label asp-for="Input.Name" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Название</label>
+                <input asp-for="Input.Name" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm text-ink" autocomplete="off" />
+                <span asp-validation-for="Input.Name" class="mt-1 block text-xs text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.SourceFolder" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Исходная папка</label>
+                <input asp-for="Input.SourceFolder" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm data-mono" autocomplete="off" />
+                <span asp-validation-for="Input.SourceFolder" class="mt-1 block text-xs text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.FilePattern" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Шаблон файлов (regex)</label>
+                <input asp-for="Input.FilePattern" class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm data-mono" autocomplete="off" />
+            </div>
+
+            <div class="ember-well p-3">
+                <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Граф / векторная коллекция</p>
+                <p class="mt-1 data-mono text-sm">@Model.Input.GraphName &middot; @Model.Input.VectorCollection</p>
+                <p class="mt-1 text-xs text-ink-muted">Не меняются после создания проекта &mdash; данные графа и векторов уже привязаны к этим именам.</p>
+            </div>
+
+            <div class="mt-2 flex justify-end gap-2">
+                <a href="/Projects/Details/@Model.Input.Id" class="btn-default">Отмена</a>
+                <button type="submit" class="btn-default" style="border-color: var(--color-accent); color: var(--color-accent);">Сохранить</button>
+            </div>
+        </form>
+    </section>
+</div>
