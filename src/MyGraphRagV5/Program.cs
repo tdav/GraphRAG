@@ -55,7 +55,8 @@ using (var startupScope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        startupLogger.LogCritical(ex, "Database migration failed for connection string 'GraphDb'. Verify the database at {ConnectionHost} is reachable.", connectionString);
+        var connectionHost = new Npgsql.NpgsqlConnectionStringBuilder(connectionString).Host;
+        startupLogger.LogCritical(ex, "Database migration failed for connection string 'GraphDb'. Verify the database at {ConnectionHost} is reachable.", connectionHost);
         throw;
     }
 }
