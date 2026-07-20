@@ -2,8 +2,9 @@ namespace MyGraphRagV5.Ai;
 
 /// <summary>
 /// Configuration for the Ollama Cloud chat client (OpenAI-compatible endpoint).
-/// Bound from config section "Ollama". ApiKey must come from user-secrets or the
-/// OLLAMA_API_KEY environment variable - never hardcode it.
+/// Bound from config section "Ollama". ApiKey is read from configuration key
+/// "Ollama:ApiKey", supplied via user-secrets or an environment variable mapped to that
+/// config key - never hardcode it.
 /// </summary>
 public sealed record OllamaOptions
 {

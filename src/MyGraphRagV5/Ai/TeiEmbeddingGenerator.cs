@@ -15,7 +15,7 @@ public sealed class TeiEmbeddingGenerator(HttpClient httpClient, IOptions<TeiOpt
     private readonly HttpClient httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private readonly TeiOptions options = options?.Value ?? throw new ArgumentNullException(nameof(options));
 
-    /// <summary>Embedding dimension observed from the last response, if any. Populated lazily.</summary>
+    /// <summary>Embedding dimension captured once from the first embedding produced, if any.</summary>
     public int? Dimension { get; private set; }
 
     public async Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(

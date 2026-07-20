@@ -50,9 +50,17 @@ public static class AiServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Placeholder used when no API key is configured. <see cref="ApiKeyCredential"/> rejects an
+    /// empty string at construction time, which would fail DI resolution of <see cref="IChatClient"/>
+    /// before any HTTP call is made. Using a non-empty placeholder defers the failure to the first
+    /// actual request, which then fails as a 401 from the server.
+    /// </summary>
+    private const string MissingApiKeyPlaceholder = "unset";
+
     private static IChatClient CreateChatClient(OllamaOptions options)
     {
-        var credential = new ApiKeyCredential(options.ApiKey ?? string.Empty);
+        var credential = new ApiKeyCredential(options.ApiKey ?? MissingApiKeyPlaceholder);
         var clientOptions = new OpenAIClientOptions { Endpoint = new Uri(options.Endpoint) };
         var openAiClient = new OpenAIClient(credential, clientOptions);
         return openAiClient.GetChatClient(options.Model).AsIChatClient();
