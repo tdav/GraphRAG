@@ -1,0 +1,16 @@
+@page
+@model MyGraphRagV5.Pages.Health.PanelModel
+@{
+    Layout = null;
+}
+<p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Состояние сервисов</p>
+<dl class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+    @foreach (var entry in Model.Entries)
+    {
+        var (cssClass, label) = StatusBadge.ForHealthStatus(entry.Status);
+        <div class="ember-well flex items-center justify-between gap-3 px-3 py-2">
+            <dt class="text-sm font-medium">@entry.DisplayName</dt>
+            <dd><span class="@cssClass">@label</span></dd>
+        </div>
+    }
+</dl>

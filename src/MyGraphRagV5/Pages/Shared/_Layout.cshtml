@@ -1,0 +1,91 @@
+@{
+    var currentPath = Context.Request.Path.Value ?? "/";
+
+    bool IsActive(string href) => href == "/"
+        ? currentPath == "/"
+        : currentPath.StartsWith(href, StringComparison.OrdinalIgnoreCase);
+
+    string NavClass(string href) => IsActive(href) ? "nav-item is-active" : "nav-item";
+}
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] as string ?? "MyGraphRagV5")</title>
+    <script>
+        // Applied before first paint to avoid a flash of the wrong theme. Dark is the default.
+        (function () {
+            var saved = localStorage.getItem("theme");
+            document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
+        })();
+    </script>
+    <link rel="stylesheet" href="~/css/app.css" />
+</head>
+<body class="min-h-screen bg-bg text-ink font-sans text-sm">
+    <div class="flex min-h-screen">
+        <aside class="flex w-[260px] shrink-0 flex-col border-r border-hairline bg-panel">
+            <div class="flex h-16 items-center gap-2 border-b border-hairline px-5">
+                <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
+                <span class="text-base font-semibold">MyGraphRagV5</span>
+            </div>
+            <nav class="flex flex-1 flex-col gap-1 p-3">
+                <a href="/" class="@NavClass("/")">
+                    <span>Дашборд</span>
+                </a>
+                <a href="/Projects" class="@NavClass("/Projects")">
+                    <span>Проекты</span>
+                </a>
+                <a href="/Chat" class="@NavClass("/Chat")">
+                    <span>Поиск</span>
+                </a>
+                <a href="/Graph" class="@NavClass("/Graph")">
+                    <span>Граф</span>
+                </a>
+            </nav>
+        </aside>
+
+        <div class="flex min-w-0 flex-1 flex-col">
+            <header class="flex h-16 shrink-0 items-center justify-between border-b border-hairline px-6">
+                <h1 class="text-lg font-semibold">@(ViewData["Title"] as string ?? "Дашборд")</h1>
+                <button
+                    type="button"
+                    id="theme-toggle"
+                    class="btn-ghost"
+                    aria-label="Переключить тему">
+                    <span id="theme-toggle-label">Тёмная тема</span>
+                </button>
+            </header>
+            <main class="flex-1 overflow-y-auto p-6">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/htmx.min.js"></script>
+    <script>
+        (function () {
+            var toggle = document.getElementById("theme-toggle");
+            var label = document.getElementById("theme-toggle-label");
+
+            function currentTheme() {
+                return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+            }
+
+            function render() {
+                label.textContent = currentTheme() === "light" ? "Светлая тема" : "Тёмная тема";
+            }
+
+            toggle.addEventListener("click", function () {
+                var next = currentTheme() === "light" ? "dark" : "light";
+                document.documentElement.setAttribute("data-theme", next);
+                localStorage.setItem("theme", next);
+                render();
+            });
+
+            render();
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

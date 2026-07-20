@@ -866,3 +866,7 @@ FodyWeavers.xsd
 *.trx
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,intellij,intellij+all,rider,angular,dotnetcore,aspnetcore,xamarinstudio
+
+### MyGraphRagV5 ###
+# Downloaded Tailwind v4 standalone CLI binary (fetched by the csproj's BuildTailwindCss target).
+src/MyGraphRagV5/tools/

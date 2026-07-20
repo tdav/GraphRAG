@@ -1,0 +1,170 @@
+@import "tailwindcss";
+@import "./fonts.css";
+
+/*
+ * Ember design tokens (see DESIGN.md / DESIGN.json at repo root).
+ * Dark theme is the default surface; light theme overrides via [data-theme="light"] on <html>.
+ * Only Ember Orange is a brand/interactive accent — the five sem-* roles are reserved for
+ * status (file/run state, health) and are always paired with a text label, never color alone.
+ */
+:root {
+  --ember-bg: #2D2D35;
+  --ember-panel: #363640;
+  --ember-well: #1E1E26;
+  --ember-surface: #3A3A45;
+  --ember-hairline: rgba(255, 255, 255, 0.08);
+  --ember-hairline-strong: rgba(255, 255, 255, 0.14);
+
+  --ember-ink: #FFFFFF;
+  --ember-ink-secondary: #8A8A9A;
+  --ember-ink-muted: #7D7D8A;
+
+  --ember-accent: #FF6B2C;
+  --ember-accent-light: #FF8C42;
+
+  --ember-success: #4ADE80;
+  --ember-warning: #FFB02E;
+  --ember-danger: #FF4D4D;
+  --ember-info: #4DA6FF;
+  --ember-muted: #6B7280;
+}
+
+:root[data-theme="light"] {
+  --ember-bg: #F0F0F5;
+  --ember-panel: #FFFFFF;
+  --ember-well: #E4E4EC;
+  --ember-surface: #E4E4EC;
+  --ember-hairline: rgba(26, 26, 46, 0.10);
+  --ember-hairline-strong: rgba(26, 26, 46, 0.18);
+
+  --ember-ink: #1A1A2E;
+  --ember-ink-secondary: #8A8A9A;
+  --ember-ink-muted: #7D7D8A;
+
+  --ember-success: #16A34A;
+  --ember-warning: #D97706;
+  --ember-danger: #DC2626;
+  --ember-info: #2563EB;
+  --ember-muted: #6B7280;
+}
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+
+  --color-bg: var(--ember-bg);
+  --color-panel: var(--ember-panel);
+  --color-well: var(--ember-well);
+  --color-surface: var(--ember-surface);
+  --color-hairline: var(--ember-hairline);
+  --color-hairline-strong: var(--ember-hairline-strong);
+
+  --color-ink: var(--ember-ink);
+  --color-ink-secondary: var(--ember-ink-secondary);
+  --color-ink-muted: var(--ember-ink-muted);
+
+  --color-accent: var(--ember-accent);
+  --color-accent-light: var(--ember-accent-light);
+
+  --color-success: var(--ember-success);
+  --color-warning: var(--ember-warning);
+  --color-danger: var(--ember-danger);
+  --color-info: var(--ember-info);
+  --color-muted: var(--ember-muted);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-overlay-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Flat panel/card surface: hairline border, no box-shadow (Ember "Hairline Rule"). */
+  .ember-panel {
+    @apply bg-panel border border-hairline rounded-lg;
+  }
+
+  .ember-well {
+    @apply bg-well border border-hairline rounded-md;
+  }
+
+  /* Sidebar nav item. Active state = accent tint background + ember text (never color alone -- text label always present). */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-ink-secondary transition-colors;
+  }
+
+  .nav-item:hover {
+    background-color: rgb(255 107 44 / 10%);
+    color: var(--color-ink);
+  }
+
+  .nav-item.is-active {
+    background-color: rgb(255 107 44 / 12%);
+    color: var(--color-accent);
+  }
+
+  .btn-default {
+    @apply inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-hairline bg-panel px-4 text-sm font-medium text-ink transition-colors;
+  }
+
+  .btn-default:hover {
+    background-color: var(--color-surface);
+    border-color: var(--color-hairline-strong);
+  }
+
+  .btn-ghost {
+    @apply inline-flex min-h-9 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-ink-secondary transition-colors;
+  }
+
+  .btn-ghost:hover {
+    background-color: rgb(255 107 44 / 10%);
+    color: var(--color-ink);
+  }
+
+  /* Status badge: tinted (8-12% opacity) background + solid text color. Always used with a text label. */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background-color: currentColor;
+  }
+
+  .badge-success { background-color: rgb(74 222 128 / 12%); color: var(--color-success); }
+  .badge-warning { background-color: rgb(255 176 46 / 12%); color: var(--color-warning); }
+  .badge-danger { background-color: rgb(255 77 77 / 12%); color: var(--color-danger); }
+  .badge-info { background-color: rgb(77 166 255 / 12%); color: var(--color-info); }
+  .badge-muted { background-color: rgb(107 114 128 / 12%); color: var(--color-muted); }
+
+  .data-mono {
+    @apply font-mono text-ink-secondary;
+  }
+}
