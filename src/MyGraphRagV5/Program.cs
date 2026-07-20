@@ -69,9 +69,6 @@ app.MapHealthChecks("/healthz", new HealthCheckOptions
     ResponseWriter = WriteHealthReportAsync,
 });
 
-// Temporary fallback until Task 8 adds the real Index Razor Page; fine for "/" to 404 once that lands.
-app.MapGet("/", () => "MyGraphRagV5");
-
 app.Run();
 
 static async Task WriteHealthReportAsync(HttpContext context, HealthReport report)
