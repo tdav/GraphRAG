@@ -3,6 +3,7 @@ using GraphRag.Graphs;
 using GraphRag.Storage.Postgres;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MyGraphRagV5.Query;
 
 namespace MyGraphRagV5.Indexing;
 
@@ -13,7 +14,7 @@ namespace MyGraphRagV5.Indexing;
 /// (creates the AGE graph) exactly once per graph name.
 /// </summary>
 public sealed class ProjectGraphStoreProvider(IConfiguration configuration, ILoggerFactory loggerFactory)
-    : IAsyncDisposable
+    : IAsyncDisposable, IProjectGraphStoreProvider
 {
     private readonly string connectionString = configuration.GetConnectionString("GraphDb")
         ?? throw new InvalidOperationException("Connection string 'GraphDb' is not configured.");
