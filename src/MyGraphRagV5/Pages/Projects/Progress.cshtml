@@ -3,4 +3,13 @@
 @{
     Layout = null;
 }
-<partial name="_RunProgress" model="Model.ViewModel" />
+@if (Model.ViewModel is not null)
+{
+    <partial name="_RunProgress" model="Model.ViewModel" />
+}
+else
+{
+    <div id="run-progress" class="ember-well p-4">
+        <p class="text-sm text-ink-muted">Запуск недоступен. Проект или запуск были удалены.</p>
+    </div>
+}

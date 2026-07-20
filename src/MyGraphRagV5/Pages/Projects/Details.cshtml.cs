@@ -55,7 +55,7 @@ public sealed class DetailsModel(AppDbContext db, RunRegistry runRegistry, Index
             return this.NotFound();
         }
 
-        Guid runId;
+        Guid? runId;
         if (this.runRegistry.HasActiveRun(id))
         {
             runId = await this.LatestRunningRunIdAsync(id, cancellationToken);
@@ -73,15 +73,26 @@ public sealed class DetailsModel(AppDbContext db, RunRegistry runRegistry, Index
             }
         }
 
+        if (runId is null)
+        {
+            // RunRegistry registers a run before its IndexingRun row commits (see StartRunAsync), so
+            // a second Start can land in that gap: HasActiveRun is already true, but no Running row
+            // exists yet for LatestRunningRunIdAsync to find. Rather than surface that as a 500, tell
+            // htmx to do a full reload of Details -- by the time the browser re-requests it the row
+            // has virtually always committed, and Details' own OnGetAsync tolerates "no row yet" fine.
+            this.Response.Headers["HX-Redirect"] = $"/Projects/Details/{id}";
+            return this.Content(string.Empty);
+        }
+
         return this.RedirectToPage("Progress", new { runId });
     }
 
-    private async Task<Guid> LatestRunningRunIdAsync(Guid projectId, CancellationToken cancellationToken) =>
+    private async Task<Guid?> LatestRunningRunIdAsync(Guid projectId, CancellationToken cancellationToken) =>
         await this.db.IndexingRuns.AsNoTracking()
             .Where(r => r.ProjectId == projectId && r.Status == IndexingRunStatus.Running)
             .OrderByDescending(r => r.StartedAt)
-            .Select(r => r.Id)
-            .FirstAsync(cancellationToken);
+            .Select(r => (Guid?)r.Id)
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken cancellationToken)
     {
