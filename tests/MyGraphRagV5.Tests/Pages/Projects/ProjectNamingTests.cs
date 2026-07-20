@@ -6,29 +6,29 @@ namespace MyGraphRagV5.Tests.Pages.Projects;
 
 public class ProjectNamingTests
 {
-    [Fact]
+    [Test]
     public async Task DeriveUniqueAsync_SanitizesNameIntoSafeIdentifiers()
     {
         using var db = CreateDb();
 
         var (graphName, vectorCollection) = await ProjectNaming.DeriveUniqueAsync(db, "My Cool Project!", CancellationToken.None);
 
-        Assert.Equal("g_my_cool_project_", graphName);
-        Assert.Equal("my_cool_project_", vectorCollection);
+        await Assert.That(graphName).IsEqualTo("g_my_cool_project_");
+        await Assert.That(vectorCollection).IsEqualTo("my_cool_project_");
     }
 
-    [Fact]
+    [Test]
     public async Task DeriveUniqueAsync_FallsBackToPlaceholder_WhenNameSanitizesToNothing()
     {
         using var db = CreateDb();
 
         var (graphName, vectorCollection) = await ProjectNaming.DeriveUniqueAsync(db, "???", CancellationToken.None);
 
-        Assert.Equal("g_project", graphName);
-        Assert.Equal("project", vectorCollection);
+        await Assert.That(graphName).IsEqualTo("g_project");
+        await Assert.That(vectorCollection).IsEqualTo("project");
     }
 
-    [Fact]
+    [Test]
     public async Task DeriveUniqueAsync_AppendsSuffixOnCollision()
     {
         using var db = CreateDb();
@@ -45,11 +45,11 @@ public class ProjectNamingTests
 
         var (graphName, vectorCollection) = await ProjectNaming.DeriveUniqueAsync(db, "Acme", CancellationToken.None);
 
-        Assert.Equal("g_acme_1", graphName);
-        Assert.Equal("acme_1", vectorCollection);
+        await Assert.That(graphName).IsEqualTo("g_acme_1");
+        await Assert.That(vectorCollection).IsEqualTo("acme_1");
     }
 
-    [Fact]
+    [Test]
     public async Task DeriveUniqueAsync_KeepsIncrementingUntilFree()
     {
         using var db = CreateDb();
@@ -60,8 +60,8 @@ public class ProjectNamingTests
 
         var (graphName, vectorCollection) = await ProjectNaming.DeriveUniqueAsync(db, "Acme", CancellationToken.None);
 
-        Assert.Equal("g_acme_2", graphName);
-        Assert.Equal("acme_2", vectorCollection);
+        await Assert.That(graphName).IsEqualTo("g_acme_2");
+        await Assert.That(vectorCollection).IsEqualTo("acme_2");
     }
 
     private static AppDbContext CreateDb()

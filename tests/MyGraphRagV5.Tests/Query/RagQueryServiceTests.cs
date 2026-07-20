@@ -52,7 +52,7 @@ public class RagQueryServiceTests
             ["title"] = title,
         });
 
-    [Fact]
+    [Test]
     public async Task AskAsync_RunsRetrievalGraphExpansionRerankPrompt_AndReturnsAnswerWithSources()
     {
         var (scopeFactory, projectId) = CreateSeededScopeFactory();
@@ -96,61 +96,66 @@ public class RagQueryServiceTests
         var answer = await service.AskAsync(projectId, "Who is Ada?", ct: CancellationToken.None);
 
         // Answer comes straight from the chat client.
-        Assert.Equal("Ada invented computing concepts [1][2].", answer.Answer);
+        await Assert.That(answer.Answer).IsEqualTo("Ada invented computing concepts [1][2].");
 
         // Vector search hit the project's own collection.
-        Assert.Equal("vec_test", vectorStore.LastCollection);
-        Assert.Equal(20, vectorStore.LastLimit);
+        await Assert.That(vectorStore.LastCollection).IsEqualTo("vec_test");
+        await Assert.That(vectorStore.LastLimit).IsEqualTo(20);
 
         // Graph expansion used the project's graph and the entity-type hit's title.
-        Assert.Equal("graph_test", graphProvider.LastGraphName);
-        Assert.Contains("Ada", graphStore.RequestedSourceIds);
+        await Assert.That(graphProvider.LastGraphName).IsEqualTo("graph_test");
+        await Assert.That(graphStore.RequestedSourceIds).Contains("Ada");
 
         // The relationship fact reached the rerank input alongside the two text passages
         // (the empty-text community candidate was excluded).
-        Assert.Equal(3, reranker.LastTexts!.Count);
-        Assert.Contains(reranker.LastTexts!, t => t.Contains("Ada —invented→ Analytical Engine"));
-        Assert.Equal(8, reranker.LastTopN);
+        await Assert.That(reranker.LastTexts!.Count).IsEqualTo(3);
+        await Assert.That(reranker.LastTexts!).Contains(t => t.Contains("Ada —invented→ Analytical Engine"));
+        await Assert.That(reranker.LastTopN).IsEqualTo(8);
 
         // Sources are assembled from the reranked candidates, in rerank order.
-        Assert.Equal(3, answer.Sources.Count);
+        await Assert.That(answer.Sources.Count).IsEqualTo(3);
 
-        Assert.Equal("relationship:Ada->Analytical Engine:invented", answer.Sources[0].Id);
-        Assert.Equal("Ada", answer.Sources[0].Title);
-        Assert.Equal("Ada —invented→ Analytical Engine: Ada designed programs for it.", answer.Sources[0].Snippet);
-        Assert.Equal(0.95, answer.Sources[0].Score);
+        await Assert.That(answer.Sources[0].Id).IsEqualTo("relationship:Ada->Analytical Engine:invented");
+        await Assert.That(answer.Sources[0].Title).IsEqualTo("Ada");
+        await Assert.That(answer.Sources[0].Snippet).IsEqualTo("Ada —invented→ Analytical Engine: Ada designed programs for it.");
+        await Assert.That(answer.Sources[0].Score).IsEqualTo(0.95);
 
-        Assert.Equal("text_unit:tu1", answer.Sources[1].Id);
-        Assert.Equal("tu1", answer.Sources[1].Title);
-        Assert.Equal(0.80, answer.Sources[1].Score);
+        await Assert.That(answer.Sources[1].Id).IsEqualTo("text_unit:tu1");
+        await Assert.That(answer.Sources[1].Title).IsEqualTo("tu1");
+        await Assert.That(answer.Sources[1].Score).IsEqualTo(0.80);
 
-        Assert.Equal("entity:Ada", answer.Sources[2].Id);
-        Assert.Equal("Ada", answer.Sources[2].Title);
-        Assert.Equal(0.50, answer.Sources[2].Score);
+        await Assert.That(answer.Sources[2].Id).IsEqualTo("entity:Ada");
+        await Assert.That(answer.Sources[2].Title).IsEqualTo("Ada");
+        await Assert.That(answer.Sources[2].Score).IsEqualTo(0.50);
 
         // Prompt numbers the passages in rerank order and instructs context-only, cited answers.
-        var systemMessage = Assert.Single(chatClient.LastMessages!, m => m.Role == ChatRole.System);
-        Assert.Contains("ONLY", systemMessage.Text);
-        var userMessage = Assert.Single(chatClient.LastMessages!, m => m.Role == ChatRole.User);
-        Assert.Contains("[1] Ada —invented→ Analytical Engine", userMessage.Text);
-        Assert.Contains("Who is Ada?", userMessage.Text);
+        await Assert.That(chatClient.LastMessages!).HasSingleItem(m => m.Role == ChatRole.System);
+        var systemMessage = chatClient.LastMessages!.Single(m => m.Role == ChatRole.System);
+        await Assert.That(systemMessage.Text).Contains("ONLY");
+        await Assert.That(chatClient.LastMessages!).HasSingleItem(m => m.Role == ChatRole.User);
+        var userMessage = chatClient.LastMessages!.Single(m => m.Role == ChatRole.User);
+        await Assert.That(userMessage.Text).Contains("[1] Ada —invented→ Analytical Engine");
+        await Assert.That(userMessage.Text).Contains("Who is Ada?");
 
         // Persisted to chat history: a new session plus the user/assistant exchange.
         using var verifyScope = scopeFactory.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var session = Assert.Single(db.ChatSessions.Where(s => s.ProjectId == projectId));
+        await Assert.That(db.ChatSessions.Where(s => s.ProjectId == projectId)).HasSingleItem();
+        var session = db.ChatSessions.Single(s => s.ProjectId == projectId);
         var messages = db.ChatMessages.Where(m => m.SessionId == session.Id).ToList();
-        Assert.Equal(2, messages.Count);
-        var userRow = Assert.Single(messages, m => m.Role == "user");
-        Assert.Equal("Who is Ada?", userRow.Content);
-        var assistantRow = Assert.Single(messages, m => m.Role == "assistant");
-        Assert.Equal(answer.Answer, assistantRow.Content);
-        Assert.NotNull(assistantRow.SourcesJson);
+        await Assert.That(messages.Count).IsEqualTo(2);
+        await Assert.That(messages).HasSingleItem(m => m.Role == "user");
+        var userRow = messages.Single(m => m.Role == "user");
+        await Assert.That(userRow.Content).IsEqualTo("Who is Ada?");
+        await Assert.That(messages).HasSingleItem(m => m.Role == "assistant");
+        var assistantRow = messages.Single(m => m.Role == "assistant");
+        await Assert.That(assistantRow.Content).IsEqualTo(answer.Answer);
+        await Assert.That(assistantRow.SourcesJson).IsNotNull();
         // System.Text.Json escapes '>' by default; check for the unambiguous, unescaped prefix.
-        Assert.Contains("relationship:Ada-", assistantRow.SourcesJson);
+        await Assert.That(assistantRow.SourcesJson).Contains("relationship:Ada-");
     }
 
-    [Fact]
+    [Test]
     public async Task StreamAnswerAsync_YieldsChunksInOrder_AndPersistsAccumulatedAnswer()
     {
         var (scopeFactory, projectId) = CreateSeededScopeFactory();
@@ -176,15 +181,16 @@ public class RagQueryServiceTests
             chunks.Add(chunk);
         }
 
-        Assert.Equal(["Full ", "answer."], chunks);
+        await Assert.That(chunks).IsEquivalentTo(["Full ", "answer."]);
 
         using var verifyScope = scopeFactory.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await Assert.That(db.ChatMessages).HasSingleItem(m => m.Role == "assistant");
         var assistantRow = db.ChatMessages.Single(m => m.Role == "assistant");
-        Assert.Equal("Full answer.", assistantRow.Content);
+        await Assert.That(assistantRow.Content).IsEqualTo("Full answer.");
     }
 
-    [Fact]
+    [Test]
     public async Task AskAsync_ReusesProvidedChatSessionId_InsteadOfCreatingANewOne()
     {
         var (scopeFactory, projectId) = CreateSeededScopeFactory();
@@ -212,11 +218,11 @@ public class RagQueryServiceTests
 
         using var verifyScope = scopeFactory.CreateScope();
         var db2 = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(1, db2.ChatSessions.Count(s => s.ProjectId == projectId));
-        Assert.Equal(2, db2.ChatMessages.Count(m => m.SessionId == sessionId));
+        await Assert.That(db2.ChatSessions.Count(s => s.ProjectId == projectId)).IsEqualTo(1);
+        await Assert.That(db2.ChatMessages.Count(m => m.SessionId == sessionId)).IsEqualTo(2);
     }
 
-    [Fact]
+    [Test]
     public async Task AskAsync_ThrowsWhenProjectNotFound()
     {
         var dbName = Guid.NewGuid().ToString();
@@ -232,7 +238,7 @@ public class RagQueryServiceTests
             new FakeReranker([]),
             new FakeChatClient("unused"));
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.AskAsync(Guid.NewGuid(), "Q?", ct: CancellationToken.None));
+        await Assert.That(async () => { await service.AskAsync(Guid.NewGuid(), "Q?", ct: CancellationToken.None); })
+            .Throws<InvalidOperationException>();
     }
 }

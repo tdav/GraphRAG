@@ -10,7 +10,7 @@ namespace MyGraphRagV5.Tests.Pages.Projects;
 
 public class DetailsModelTests
 {
-    [Fact]
+    [Test]
     public async Task OnPostStartAsync_RegistryHasActiveRunButRowNotCommittedYet_RedirectsInsteadOfThrowing()
     {
         // Simulates the concurrent-start race: IndexingService.StartRunAsync adds the run to
@@ -44,8 +44,8 @@ public class DetailsModelTests
 
         var result = await model.OnPostStartAsync(projectId, CancellationToken.None);
 
-        Assert.IsType<ContentResult>(result);
-        Assert.Equal($"/Projects/Details/{projectId}", model.Response.Headers["HX-Redirect"].ToString());
+        await Assert.That(result).IsTypeOf<ContentResult>();
+        await Assert.That(model.Response.Headers["HX-Redirect"].ToString()).IsEqualTo($"/Projects/Details/{projectId}");
     }
 
     private static AppDbContext CreateDb()

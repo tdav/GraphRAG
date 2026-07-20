@@ -6,7 +6,7 @@ namespace MyGraphRagV5.Tests.Ai;
 
 public class TeiRerankerTests
 {
-    [Fact]
+    [Test]
     public async Task RerankAsync_PostsQueryAndTextsToRerankEndpoint()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -23,13 +23,14 @@ public class TeiRerankerTests
 
         await reranker.RerankAsync("query", ["doc a", "doc b"], topN: 2, CancellationToken.None);
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal(HttpMethod.Post, request.Request.Method);
-        Assert.Equal("/rerank", request.Request.RequestUri!.AbsolutePath);
-        Assert.Equal("""{"query":"query","texts":["doc a","doc b"]}""", request.Body);
+        await Assert.That(handler.Requests).HasSingleItem();
+        var request = handler.Requests.Single();
+        await Assert.That(request.Request.Method).IsEqualTo(HttpMethod.Post);
+        await Assert.That(request.Request.RequestUri!.AbsolutePath).IsEqualTo("/rerank");
+        await Assert.That(request.Body).IsEqualTo("""{"query":"query","texts":["doc a","doc b"]}""");
     }
 
-    [Fact]
+    [Test]
     public async Task RerankAsync_SortsByScoreDescendingAndAppliesTopN()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -47,8 +48,8 @@ public class TeiRerankerTests
 
         var result = await reranker.RerankAsync("query", ["a", "b", "c"], topN: 2, CancellationToken.None);
 
-        Assert.Equal(2, result.Count);
-        Assert.Equal(new RerankResult(1, 0.9), result[0]);
-        Assert.Equal(new RerankResult(2, 0.5), result[1]);
+        await Assert.That(result.Count).IsEqualTo(2);
+        await Assert.That(result[0]).IsEqualTo(new RerankResult(1, 0.9));
+        await Assert.That(result[1]).IsEqualTo(new RerankResult(2, 0.5));
     }
 }

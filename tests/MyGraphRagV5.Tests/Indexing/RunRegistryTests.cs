@@ -5,8 +5,8 @@ namespace MyGraphRagV5.Tests.Indexing;
 
 public class RunRegistryTests
 {
-    [Fact]
-    public void TryRegister_RegistersRun_AndExposesHandle()
+    [Test]
+    public async Task TryRegister_RegistersRun_AndExposesHandle()
     {
         var registry = new RunRegistry();
         var runId = Guid.NewGuid();
@@ -15,15 +15,15 @@ public class RunRegistryTests
 
         var handle = registry.TryRegister(runId, projectId, cts);
 
-        Assert.NotNull(handle);
-        Assert.Equal(runId, handle!.RunId);
-        Assert.Equal(projectId, handle.ProjectId);
-        Assert.True(registry.HasActiveRun(projectId));
-        Assert.Same(handle, registry.Get(runId));
+        await Assert.That(handle).IsNotNull();
+        await Assert.That(handle!.RunId).IsEqualTo(runId);
+        await Assert.That(handle.ProjectId).IsEqualTo(projectId);
+        await Assert.That(registry.HasActiveRun(projectId)).IsTrue();
+        await Assert.That(registry.Get(runId)).IsSameReferenceAs(handle);
     }
 
-    [Fact]
-    public void TryRegister_RejectsSecondRunForSameProject()
+    [Test]
+    public async Task TryRegister_RejectsSecondRunForSameProject()
     {
         var registry = new RunRegistry();
         var projectId = Guid.NewGuid();
@@ -33,12 +33,12 @@ public class RunRegistryTests
         var first = registry.TryRegister(Guid.NewGuid(), projectId, cts1);
         var second = registry.TryRegister(Guid.NewGuid(), projectId, cts2);
 
-        Assert.NotNull(first);
-        Assert.Null(second);
+        await Assert.That(first).IsNotNull();
+        await Assert.That(second).IsNull();
     }
 
-    [Fact]
-    public void Remove_FreesProjectSlot_AllowingANewRun()
+    [Test]
+    public async Task Remove_FreesProjectSlot_AllowingANewRun()
     {
         var registry = new RunRegistry();
         var projectId = Guid.NewGuid();
@@ -49,13 +49,13 @@ public class RunRegistryTests
         registry.TryRegister(firstRunId, projectId, cts1);
         registry.Remove(firstRunId);
 
-        Assert.False(registry.HasActiveRun(projectId));
-        Assert.Null(registry.Get(firstRunId));
-        Assert.NotNull(registry.TryRegister(Guid.NewGuid(), projectId, cts2));
+        await Assert.That(registry.HasActiveRun(projectId)).IsFalse();
+        await Assert.That(registry.Get(firstRunId)).IsNull();
+        await Assert.That(registry.TryRegister(Guid.NewGuid(), projectId, cts2)).IsNotNull();
     }
 
-    [Fact]
-    public void CancelRun_CancelsTheRunToken()
+    [Test]
+    public async Task CancelRun_CancelsTheRunToken()
     {
         var registry = new RunRegistry();
         var runId = Guid.NewGuid();
@@ -64,20 +64,20 @@ public class RunRegistryTests
 
         var cancelled = registry.CancelRun(runId);
 
-        Assert.True(cancelled);
-        Assert.True(cts.IsCancellationRequested);
+        await Assert.That(cancelled).IsTrue();
+        await Assert.That(cts.IsCancellationRequested).IsTrue();
     }
 
-    [Fact]
-    public void CancelRun_ReturnsFalseForUnknownRun()
+    [Test]
+    public async Task CancelRun_ReturnsFalseForUnknownRun()
     {
         var registry = new RunRegistry();
 
-        Assert.False(registry.CancelRun(Guid.NewGuid()));
+        await Assert.That(registry.CancelRun(Guid.NewGuid())).IsFalse();
     }
 
-    [Fact]
-    public void CancelRun_ReturnsFalseForAlreadyRemovedRun()
+    [Test]
+    public async Task CancelRun_ReturnsFalseForAlreadyRemovedRun()
     {
         var registry = new RunRegistry();
         var runId = Guid.NewGuid();
@@ -85,11 +85,11 @@ public class RunRegistryTests
         registry.TryRegister(runId, Guid.NewGuid(), cts);
         registry.Remove(runId);
 
-        Assert.False(registry.CancelRun(runId));
+        await Assert.That(registry.CancelRun(runId)).IsFalse();
     }
 
-    [Fact]
-    public void CancelRun_HandlesCtsDisposedConcurrentlyWithFinish_WithoutThrowing()
+    [Test]
+    public async Task CancelRun_HandlesCtsDisposedConcurrentlyWithFinish_WithoutThrowing()
     {
         // Simulates the race in IndexingService.RunPipelineAsync's finally block: the background task
         // can dispose the run's CTS between CancelRun's TryGetValue and its Cancel() call, once the
@@ -102,11 +102,11 @@ public class RunRegistryTests
 
         var cancelled = registry.CancelRun(runId);
 
-        Assert.False(cancelled);
+        await Assert.That(cancelled).IsFalse();
     }
 
-    [Fact]
-    public void Update_StoresLatestWorkflowAndProgress_Retrievable()
+    [Test]
+    public async Task Update_StoresLatestWorkflowAndProgress_Retrievable()
     {
         var registry = new RunRegistry();
         var runId = Guid.NewGuid();
@@ -119,17 +119,17 @@ public class RunRegistryTests
 
         var progress = registry.GetProgress(runId);
 
-        Assert.NotNull(progress);
-        Assert.Equal("create_communities", progress!.CurrentWorkflow);
-        Assert.Equal(4, progress.Progress!.CompletedItems);
-        Assert.Equal(40d, progress.Percent!.Value);
+        await Assert.That(progress).IsNotNull();
+        await Assert.That(progress!.CurrentWorkflow).IsEqualTo("create_communities");
+        await Assert.That(progress.Progress!.CompletedItems).IsEqualTo(4);
+        await Assert.That(progress.Percent!.Value).IsEqualTo(40d);
     }
 
-    [Fact]
-    public void GetProgress_ReturnsNullForUnknownRun()
+    [Test]
+    public async Task GetProgress_ReturnsNullForUnknownRun()
     {
         var registry = new RunRegistry();
 
-        Assert.Null(registry.GetProgress(Guid.NewGuid()));
+        await Assert.That(registry.GetProgress(Guid.NewGuid())).IsNull();
     }
 }

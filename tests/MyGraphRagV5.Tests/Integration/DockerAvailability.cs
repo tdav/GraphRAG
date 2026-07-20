@@ -3,22 +3,11 @@ using System.Diagnostics;
 namespace MyGraphRagV5.Tests.Integration;
 
 /// <summary>
-/// A <see cref="FactAttribute"/> that skips the test instead of failing when Docker isn't
-/// reachable. The check runs once (cached) at attribute construction time, i.e. during test
-/// discovery - before the collection fixture (which would otherwise try to start containers)
-/// is ever instantiated, so a Docker-less environment gets clean skips, not hard failures.
+/// Checks Docker availability once (cached at first access). Integration test classes use a
+/// <c>[Before(Test)]</c> hook that calls <see cref="TUnit.Core.Skip.Test(string)"/> when this is
+/// false, instead of the xUnit-era custom <c>FactAttribute</c> that used to short-circuit
+/// discovery before the collection fixture could try to start containers.
 /// </summary>
-public sealed class DockerAvailableFactAttribute : FactAttribute
-{
-    public DockerAvailableFactAttribute()
-    {
-        if (!DockerAvailability.IsAvailable)
-        {
-            this.Skip = "Docker is not available in this environment.";
-        }
-    }
-}
-
 internal static class DockerAvailability
 {
     public static readonly bool IsAvailable = Check();

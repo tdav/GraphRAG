@@ -21,7 +21,7 @@ public class OllamaHealthCheckTests
         return new OllamaHealthCheck(new FakeHttpClientFactory(client), options);
     }
 
-    [Fact]
+    [Test]
     public async Task CheckHealthAsync_WithApiKey_SendsBearerAuthorizationAndReportsHealthyOn200()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -30,13 +30,14 @@ public class OllamaHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal("Bearer", request.Request.Headers.Authorization?.Scheme);
-        Assert.Equal("secret-key", request.Request.Headers.Authorization?.Parameter);
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        await Assert.That(handler.Requests).HasSingleItem();
+        var request = handler.Requests.Single();
+        await Assert.That(request.Request.Headers.Authorization?.Scheme).IsEqualTo("Bearer");
+        await Assert.That(request.Request.Headers.Authorization?.Parameter).IsEqualTo("secret-key");
+        await Assert.That(result.Status).IsEqualTo(HealthStatus.Healthy);
     }
 
-    [Fact]
+    [Test]
     public async Task CheckHealthAsync_WithApiKey_ReportsUnhealthyOn401()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -45,11 +46,11 @@ public class OllamaHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
 
-        Assert.Equal(HealthStatus.Unhealthy, result.Status);
-        Assert.Equal("Ollama rejected the API key.", result.Description);
+        await Assert.That(result.Status).IsEqualTo(HealthStatus.Unhealthy);
+        await Assert.That(result.Description).IsEqualTo("Ollama rejected the API key.");
     }
 
-    [Fact]
+    [Test]
     public async Task CheckHealthAsync_WithoutApiKey_SendsNoAuthorizationAndReportsHealthyOn200()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -58,8 +59,9 @@ public class OllamaHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Null(request.Request.Headers.Authorization);
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        await Assert.That(handler.Requests).HasSingleItem();
+        var request = handler.Requests.Single();
+        await Assert.That(request.Request.Headers.Authorization).IsNull();
+        await Assert.That(result.Status).IsEqualTo(HealthStatus.Healthy);
     }
 }

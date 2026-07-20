@@ -2,9 +2,10 @@ namespace MyGraphRagV5.Tests;
 
 public class SmokeTests
 {
-    [Fact]
-    public void ProjectBuilds()
+    [Test]
+    public async Task ProjectBuilds()
     {
-        Assert.True(true);
+        var builds = 1 + 1 == 2;
+        await Assert.That(builds).IsTrue();
     }
 }

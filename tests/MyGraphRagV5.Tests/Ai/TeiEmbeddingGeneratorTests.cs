@@ -7,7 +7,7 @@ namespace MyGraphRagV5.Tests.Ai;
 
 public class TeiEmbeddingGeneratorTests
 {
-    [Fact]
+    [Test]
     public async Task GenerateAsync_PostsInputsToEmbedEndpointAndMapsResponseInOrder()
     {
         var handler = new StubHttpMessageHandler(_ =>
@@ -20,18 +20,19 @@ public class TeiEmbeddingGeneratorTests
 
         var result = await generator.GenerateAsync(["a", "b"]);
 
-        var request = Assert.Single(handler.Requests);
-        Assert.Equal(HttpMethod.Post, request.Request.Method);
-        Assert.Equal("/embed", request.Request.RequestUri!.AbsolutePath);
-        Assert.Equal("""{"inputs":["a","b"]}""", request.Body);
+        await Assert.That(handler.Requests).HasSingleItem();
+        var request = handler.Requests.Single();
+        await Assert.That(request.Request.Method).IsEqualTo(HttpMethod.Post);
+        await Assert.That(request.Request.RequestUri!.AbsolutePath).IsEqualTo("/embed");
+        await Assert.That(request.Body).IsEqualTo("""{"inputs":["a","b"]}""");
 
-        Assert.Equal(2, result.Count);
-        Assert.Equal([0.1f, 0.2f], result[0].Vector.ToArray());
-        Assert.Equal([0.3f, 0.4f], result[1].Vector.ToArray());
-        Assert.Equal(2, generator.Dimension);
+        await Assert.That(result.Count).IsEqualTo(2);
+        await Assert.That(result[0].Vector.ToArray()).IsEquivalentTo([0.1f, 0.2f]);
+        await Assert.That(result[1].Vector.ToArray()).IsEquivalentTo([0.3f, 0.4f]);
+        await Assert.That(generator.Dimension).IsEqualTo(2);
     }
 
-    [Fact]
+    [Test]
     public async Task GenerateAsync_SplitsInputsLargerThanEmbedBatchSizeIntoMultipleRequests()
     {
         var handler = new StubHttpMessageHandler(async request =>
@@ -45,10 +46,10 @@ public class TeiEmbeddingGeneratorTests
 
         var result = await generator.GenerateAsync(["a", "b", "c", "d", "e"]);
 
-        Assert.Equal(3, handler.Requests.Count);
-        Assert.Equal("""{"inputs":["a","b"]}""", handler.Requests[0].Body);
-        Assert.Equal("""{"inputs":["c","d"]}""", handler.Requests[1].Body);
-        Assert.Equal("""{"inputs":["e"]}""", handler.Requests[2].Body);
-        Assert.Equal(5, result.Count);
+        await Assert.That(handler.Requests.Count).IsEqualTo(3);
+        await Assert.That(handler.Requests[0].Body).IsEqualTo("""{"inputs":["a","b"]}""");
+        await Assert.That(handler.Requests[1].Body).IsEqualTo("""{"inputs":["c","d"]}""");
+        await Assert.That(handler.Requests[2].Body).IsEqualTo("""{"inputs":["e"]}""");
+        await Assert.That(result.Count).IsEqualTo(5);
     }
 }

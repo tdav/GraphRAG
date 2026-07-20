@@ -22,22 +22,22 @@ public class IndexingMappingTests
             X: 0,
             Y: 0);
 
-    [Fact]
-    public void ToNode_UsesTitleAsId_AndEntityLabel()
+    [Test]
+    public async Task ToNode_UsesTitleAsId_AndEntityLabel()
     {
         var node = IndexingService.ToNode(Entity());
 
-        Assert.Equal("Ada Lovelace", node.Id);
-        Assert.Equal("Entity", node.Label);
-        Assert.Equal("PERSON", node.Properties["type"]);
-        Assert.Equal("First programmer", node.Properties["description"]);
-        Assert.Equal("e1", node.Properties["entityId"]);
-        Assert.Equal(3, (int)node.Properties["frequency"]!);
-        Assert.Equal(5, (int)node.Properties["degree"]!);
+        await Assert.That(node.Id).IsEqualTo("Ada Lovelace");
+        await Assert.That(node.Label).IsEqualTo("Entity");
+        await Assert.That(node.Properties["type"]).IsEqualTo("PERSON");
+        await Assert.That(node.Properties["description"]).IsEqualTo("First programmer");
+        await Assert.That(node.Properties["entityId"]).IsEqualTo("e1");
+        await Assert.That((int)node.Properties["frequency"]!).IsEqualTo(3);
+        await Assert.That((int)node.Properties["degree"]!).IsEqualTo(5);
     }
 
-    [Fact]
-    public void ToRelationship_MapsEndpointsTypeAndBidirectional()
+    [Test]
+    public async Task ToRelationship_MapsEndpointsTypeAndBidirectional()
     {
         var record = new RelationshipRecord(
             "r1", 2, "Ada Lovelace", "Analytical Engine", "worked_on",
@@ -45,68 +45,68 @@ public class IndexingMappingTests
 
         var rel = IndexingService.ToRelationship(record);
 
-        Assert.Equal("Ada Lovelace", rel.SourceId);
-        Assert.Equal("Analytical Engine", rel.TargetId);
-        Assert.Equal("worked_on", rel.Type);
-        Assert.True(rel.Bidirectional);
-        Assert.Equal("designed programs for", rel.Properties["description"]);
-        Assert.Equal(1.5, (double)rel.Properties["weight"]!);
-        Assert.Equal("r1", rel.Properties["relationshipId"]);
+        await Assert.That(rel.SourceId).IsEqualTo("Ada Lovelace");
+        await Assert.That(rel.TargetId).IsEqualTo("Analytical Engine");
+        await Assert.That(rel.Type).IsEqualTo("worked_on");
+        await Assert.That(rel.Bidirectional).IsTrue();
+        await Assert.That(rel.Properties["description"]).IsEqualTo("designed programs for");
+        await Assert.That((double)rel.Properties["weight"]!).IsEqualTo(1.5);
+        await Assert.That(rel.Properties["relationshipId"]).IsEqualTo("r1");
     }
 
-    [Theory]
-    [InlineData("works for", "works_for")]
-    [InlineData("", "RELATED_TO")]
-    [InlineData("   ", "RELATED_TO")]
-    [InlineData("3-way", "_3_way")]
-    [InlineData("RELATED_TO", "RELATED_TO")]
-    public void NormalizeRelationshipType_ProducesValidAgeLabel(string input, string expected)
+    [Test]
+    [Arguments("works for", "works_for")]
+    [Arguments("", "RELATED_TO")]
+    [Arguments("   ", "RELATED_TO")]
+    [Arguments("3-way", "_3_way")]
+    [Arguments("RELATED_TO", "RELATED_TO")]
+    public async Task NormalizeRelationshipType_ProducesValidAgeLabel(string input, string expected)
     {
-        Assert.Equal(expected, IndexingService.NormalizeRelationshipType(input));
+        await Assert.That(IndexingService.NormalizeRelationshipType(input)).IsEqualTo(expected);
     }
 
-    [Fact]
-    public void TextUnitEmbedding_CarriesIdTextTypeTitle()
+    [Test]
+    public async Task TextUnitEmbedding_CarriesIdTextTypeTitle()
     {
         var unit = new TextUnitRecord { Id = "tu1", Text = "hello world" };
 
         var item = IndexingService.TextUnitEmbedding(unit);
 
-        Assert.Equal("hello world", item.Text);
-        Assert.Equal("text_unit:tu1", item.Metadata["id"]);
-        Assert.Equal("hello world", item.Metadata["text"]);
-        Assert.Equal("text_unit", item.Metadata["type"]);
-        Assert.Equal("tu1", item.Metadata["title"]);
+        await Assert.That(item.Text).IsEqualTo("hello world");
+        await Assert.That(item.Metadata["id"]).IsEqualTo("text_unit:tu1");
+        await Assert.That(item.Metadata["text"]).IsEqualTo("hello world");
+        await Assert.That(item.Metadata["type"]).IsEqualTo("text_unit");
+        await Assert.That(item.Metadata["title"]).IsEqualTo("tu1");
     }
 
-    [Fact]
-    public void CommunityEmbedding_EmbedsSummary()
+    [Test]
+    public async Task CommunityEmbedding_EmbedsSummary()
     {
         var report = new CommunityReportRecord("c1", 1, new[] { "Ada" }, "Community summary text", new[] { "kw" });
 
         var item = IndexingService.CommunityEmbedding(report);
 
-        Assert.Equal("Community summary text", item.Text);
-        Assert.Equal("community:c1", item.Metadata["id"]);
-        Assert.Equal("community", item.Metadata["type"]);
+        await Assert.That(item.Text).IsEqualTo("Community summary text");
+        await Assert.That(item.Metadata["id"]).IsEqualTo("community:c1");
+        await Assert.That(item.Metadata["type"]).IsEqualTo("community");
     }
 
-    [Fact]
-    public void EntityEmbedding_CombinesNameAndDescription()
+    [Test]
+    public async Task EntityEmbedding_CombinesNameAndDescription()
     {
         var item = IndexingService.EntityEmbedding(Entity("Ada", "the first programmer"));
 
-        Assert.Equal("Ada. the first programmer", item.Text);
-        Assert.Equal("entity:Ada", item.Metadata["id"]);
-        Assert.Equal("entity", item.Metadata["type"]);
-        Assert.Equal("Ada", item.Metadata["title"]);
+        await Assert.That(item.Text).IsEqualTo("Ada. the first programmer");
+        await Assert.That(item.Metadata["id"]).IsEqualTo("entity:Ada");
+        await Assert.That(item.Metadata["type"]).IsEqualTo("entity");
+        await Assert.That(item.Metadata["title"]).IsEqualTo("Ada");
     }
 
-    [Fact]
-    public void EntityEmbedding_FallsBackToTitleWhenNoDescription()
+    [Test]
+    public async Task EntityEmbedding_FallsBackToTitleWhenNoDescription()
     {
         var item = IndexingService.EntityEmbedding(Entity("Ada", description: null));
 
-        Assert.Equal("Ada", item.Text);
+        await Assert.That(item.Text).IsEqualTo("Ada");
     }
 }

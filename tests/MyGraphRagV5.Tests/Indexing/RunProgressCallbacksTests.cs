@@ -5,8 +5,8 @@ namespace MyGraphRagV5.Tests.Indexing;
 
 public class RunProgressCallbacksTests
 {
-    [Fact]
-    public void WorkflowStart_ForwardsWorkflowNameWithCorrectRunId()
+    [Test]
+    public async Task WorkflowStart_ForwardsWorkflowNameWithCorrectRunId()
     {
         var runId = Guid.NewGuid();
         var sink = new FakeRunProgressSink();
@@ -14,14 +14,15 @@ public class RunProgressCallbacksTests
 
         callbacks.WorkflowStart("create_base_text_units", instance: null);
 
-        var call = Assert.Single(sink.Calls);
-        Assert.Equal(runId, call.RunId);
-        Assert.Equal("create_base_text_units", call.CurrentWorkflow);
-        Assert.Null(call.Progress);
+        await Assert.That(sink.Calls).HasSingleItem();
+        var call = sink.Calls.Single();
+        await Assert.That(call.RunId).IsEqualTo(runId);
+        await Assert.That(call.CurrentWorkflow).IsEqualTo("create_base_text_units");
+        await Assert.That(call.Progress).IsNull();
     }
 
-    [Fact]
-    public void ReportProgress_ForwardsProgressSnapshotWithCorrectRunId()
+    [Test]
+    public async Task ReportProgress_ForwardsProgressSnapshotWithCorrectRunId()
     {
         var runId = Guid.NewGuid();
         var sink = new FakeRunProgressSink();
@@ -30,14 +31,15 @@ public class RunProgressCallbacksTests
 
         callbacks.ReportProgress(snapshot);
 
-        var call = Assert.Single(sink.Calls);
-        Assert.Equal(runId, call.RunId);
-        Assert.Null(call.CurrentWorkflow);
-        Assert.Same(snapshot, call.Progress);
+        await Assert.That(sink.Calls).HasSingleItem();
+        var call = sink.Calls.Single();
+        await Assert.That(call.RunId).IsEqualTo(runId);
+        await Assert.That(call.CurrentWorkflow).IsNull();
+        await Assert.That(call.Progress).IsSameReferenceAs(snapshot);
     }
 
-    [Fact]
-    public void WorkflowEnd_ForwardsWorkflowNameWithCorrectRunId()
+    [Test]
+    public async Task WorkflowEnd_ForwardsWorkflowNameWithCorrectRunId()
     {
         var runId = Guid.NewGuid();
         var sink = new FakeRunProgressSink();
@@ -45,32 +47,33 @@ public class RunProgressCallbacksTests
 
         callbacks.WorkflowEnd("create_base_text_units", instance: null);
 
-        var call = Assert.Single(sink.Calls);
-        Assert.Equal(runId, call.RunId);
-        Assert.Equal("create_base_text_units", call.CurrentWorkflow);
-        Assert.Null(call.Progress);
+        await Assert.That(sink.Calls).HasSingleItem();
+        var call = sink.Calls.Single();
+        await Assert.That(call.RunId).IsEqualTo(runId);
+        await Assert.That(call.CurrentWorkflow).IsEqualTo("create_base_text_units");
+        await Assert.That(call.Progress).IsNull();
     }
 
-    [Fact]
-    public void PipelineStart_DoesNotThrow()
+    [Test]
+    public async Task PipelineStart_DoesNotThrow()
     {
         var sink = new FakeRunProgressSink();
         var callbacks = new RunProgressCallbacks(Guid.NewGuid(), sink);
 
         callbacks.PipelineStart(new[] { "create_base_text_units" });
 
-        Assert.Single(sink.Calls);
+        await Assert.That(sink.Calls).HasSingleItem();
     }
 
-    [Fact]
-    public void PipelineEnd_DoesNotThrow()
+    [Test]
+    public async Task PipelineEnd_DoesNotThrow()
     {
         var sink = new FakeRunProgressSink();
         var callbacks = new RunProgressCallbacks(Guid.NewGuid(), sink);
 
         callbacks.PipelineEnd(Array.Empty<GraphRag.Indexing.Runtime.PipelineRunResult>());
 
-        Assert.Single(sink.Calls);
+        await Assert.That(sink.Calls).HasSingleItem();
     }
 
     private sealed class FakeRunProgressSink : IRunProgressSink

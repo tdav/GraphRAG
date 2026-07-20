@@ -7,8 +7,8 @@ namespace MyGraphRagV5.Tests.Ai;
 
 public class AiServiceCollectionExtensionsTests
 {
-    [Fact]
-    public void AddAiClients_ResolvesIChatClientWithoutApiKeyConfigured()
+    [Test]
+    public async Task AddAiClients_ResolvesIChatClientWithoutApiKeyConfigured()
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -23,6 +23,6 @@ public class AiServiceCollectionExtensionsTests
 
         var chatClient = provider.GetService<IChatClient>();
 
-        Assert.NotNull(chatClient);
+        await Assert.That(chatClient).IsNotNull();
     }
 }

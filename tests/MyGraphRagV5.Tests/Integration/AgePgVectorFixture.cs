@@ -2,6 +2,7 @@ using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Images;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using TUnit.Core.Interfaces;
 
 namespace MyGraphRagV5.Tests.Integration;
 
@@ -12,7 +13,7 @@ namespace MyGraphRagV5.Tests.Integration;
 /// AGE-enablement trick from tests/ManagedCode.GraphRag.Tests/GraphRagApplicationFixture.cs
 /// (ALTER SYSTEM SET shared_preload_libraries + pg_reload_conf).
 /// </summary>
-public sealed class AgePgVectorFixture : IAsyncLifetime
+public sealed class AgePgVectorFixture : IAsyncInitializer, IAsyncDisposable
 {
     private const string Database = "mygraphragv5_test";
     private const string Username = "postgres";
@@ -59,7 +60,7 @@ public sealed class AgePgVectorFixture : IAsyncLifetime
         await EnsureVectorExtensionAsync(this.container.GetConnectionString()).ConfigureAwait(false);
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (this.container is not null)
         {

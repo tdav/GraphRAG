@@ -10,21 +10,23 @@ namespace MyGraphRagV5.Tests.Integration;
 /// <c>AddAppDatabase</c> (UseNpgsql + MigrationsHistoryTable("__EFMigrationsHistory", "app")),
 /// against a real Postgres container - the migration apply step Task 2 deferred.
 /// </summary>
-[Collection(AgePgVectorCollection.Name)]
-public sealed class AppDbContextMigrationIntegrationTests
+[ClassDataSource<AgePgVectorFixture>(Shared = SharedType.PerAssembly)]
+public sealed class AppDbContextMigrationIntegrationTests(AgePgVectorFixture fixture)
 {
-    private readonly AgePgVectorFixture fixture;
-
-    public AppDbContextMigrationIntegrationTests(AgePgVectorFixture fixture)
+    [Before(Test)]
+    public void SkipIfNoDocker()
     {
-        this.fixture = fixture;
+        if (!DockerAvailability.IsAvailable)
+        {
+            Skip.Test("Docker is not available");
+        }
     }
 
-    [DockerAvailableFact]
+    [Test]
     public async Task MigrateAsync_CreatesAppSchemaTables_AndIsIdempotentOnSecondRun()
     {
         var services = new ServiceCollection();
-        services.AddAppDatabase(this.fixture.ConnectionString);
+        services.AddAppDatabase(fixture.ConnectionString);
         await using var provider = services.BuildServiceProvider();
 
         await using (var scope = provider.CreateAsyncScope())
@@ -33,11 +35,11 @@ public sealed class AppDbContextMigrationIntegrationTests
             await db.Database.MigrateAsync();
         }
 
-        Assert.True(await TableExistsAsync(this.fixture.ConnectionString, "app", "RagProjects"));
-        Assert.True(await TableExistsAsync(this.fixture.ConnectionString, "app", "IndexingRuns"));
-        Assert.True(await TableExistsAsync(this.fixture.ConnectionString, "app", "ChatSessions"));
-        Assert.True(await TableExistsAsync(this.fixture.ConnectionString, "app", "ChatMessages"));
-        Assert.True(await TableExistsAsync(this.fixture.ConnectionString, "app", "__EFMigrationsHistory"));
+        await Assert.That(await TableExistsAsync(fixture.ConnectionString, "app", "RagProjects")).IsTrue();
+        await Assert.That(await TableExistsAsync(fixture.ConnectionString, "app", "IndexingRuns")).IsTrue();
+        await Assert.That(await TableExistsAsync(fixture.ConnectionString, "app", "ChatSessions")).IsTrue();
+        await Assert.That(await TableExistsAsync(fixture.ConnectionString, "app", "ChatMessages")).IsTrue();
+        await Assert.That(await TableExistsAsync(fixture.ConnectionString, "app", "__EFMigrationsHistory")).IsTrue();
 
         // Re-applying must be a no-op (not 42P07 "relation already exists") - this is the Task 9
         // fix that pins the migrations-history table to the "app" schema so runtime MigrateAsync
@@ -45,8 +47,7 @@ public sealed class AppDbContextMigrationIntegrationTests
         await using (var scope = provider.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var exception = await Record.ExceptionAsync(() => db.Database.MigrateAsync());
-            Assert.Null(exception);
+            await Assert.That(() => db.Database.MigrateAsync()).ThrowsNothing();
         }
     }
 
