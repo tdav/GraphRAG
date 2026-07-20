@@ -22,8 +22,8 @@ public sealed class GraphRagApplicationFixture : IAsyncLifetime
     private const string PostgresPassword = "postgres";
     private const string PostgresDatabase = "graphragdb";
     private const string ContainerTimeoutEnvVar = "GRAPH_RAG_CONTAINER_TIMEOUT_MINUTES";
-    private static readonly TimeSpan DefaultContainerStartupTimeout = TimeSpan.FromMinutes(30);
-    private static readonly TimeSpan ContainerStartupTimeout = ResolveContainerStartupTimeout();
+    private static readonly TimeSpan _defaultContainerStartupTimeout = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan _containerStartupTimeout = ResolveContainerStartupTimeout();
 
     private ServiceProvider _serviceProvider = null!;
     private AsyncServiceScope? _scope;
@@ -37,10 +37,10 @@ public sealed class GraphRagApplicationFixture : IAsyncLifetime
 
     static GraphRagApplicationFixture()
     {
-        if (TestcontainersSettings.WaitStrategyTimeout is null || TestcontainersSettings.WaitStrategyTimeout < ContainerStartupTimeout)
+        if (TestcontainersSettings.WaitStrategyTimeout is null || TestcontainersSettings.WaitStrategyTimeout < _containerStartupTimeout)
         {
             // Pulling these images can easily exceed the default timeout on fresh machines, so relax it globally.
-            TestcontainersSettings.WaitStrategyTimeout = ContainerStartupTimeout;
+            TestcontainersSettings.WaitStrategyTimeout = _containerStartupTimeout;
         }
     }
 
@@ -169,7 +169,7 @@ public sealed class GraphRagApplicationFixture : IAsyncLifetime
             return TimeSpan.FromMinutes(minutes);
         }
 
-        return DefaultContainerStartupTimeout;
+        return _defaultContainerStartupTimeout;
     }
 
     private async Task EnsurePostgresDatabaseAsync()

@@ -1,4 +1,4 @@
-# GraphRAG for .NET
+# GraphRAG для .NET
 
 [![NuGet](https://img.shields.io/nuget/v/ManagedCode.GraphRag.svg)](https://www.nuget.org/packages/ManagedCode.GraphRag/)
 [![NuGet Neo4j](https://img.shields.io/nuget/v/ManagedCode.GraphRag.Neo4j.svg?label=Neo4j)](https://www.nuget.org/packages/ManagedCode.GraphRag.Neo4j/)
@@ -8,97 +8,97 @@
 [![Build Status](https://github.com/managedcode/graphrag/actions/workflows/ci.yml/badge.svg)](https://github.com/managedcode/graphrag/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-GraphRAG for .NET is a ground-up port of Microsoft's GraphRAG reference implementation to the modern .NET 10 stack. The port keeps parity with the original Python pipelines while embracing native .NET idioms—dependency injection, logging abstractions, async I/O, and strongly-typed configuration.
+GraphRAG для .NET — это порт эталонной реализации GraphRAG от Microsoft, созданный с нуля для современного стека .NET 10. Порт сохраняет паритет с исходными Python-пайплайнами и при этом использует нативные идиомы .NET: dependency injection, абстракции логирования, асинхронный I/O и строго типизированную конфигурацию.
 
-> ℹ️ The upstream Python code remains available under [`submodules/graphrag-python`](submodules/graphrag-python) for side-by-side reference. Treat it as read-only unless a task explicitly targets the submodule.
-
----
-
-## Feature Highlights
-
-- **End-to-end indexing workflows.** All standard GraphRAG stages—document loading, chunking, graph extraction, community building, and summarisation—ship as discrete workflows that can be registered with a single `AddGraphRag(...)` call.
-- **Heuristic ingestion & maintenance.** Built-in overlapping chunk windows, semantic deduplication, orphan-node linking, relationship enhancement/validation, and token-budget trimming keep your graph clean without bespoke services.
-- **Fast label propagation communities.** A configurable fast label propagation detector (with connected-component fallback) mirrors the behaviour of the GraphRag.Net demo directly inside the pipeline.
-- **Pluggable graph stores.** Ready-made adapters for Azure Cosmos DB, Neo4j, and Apache AGE/PostgreSQL conform to `IGraphStore` so you can swap back-ends without touching workflows.
-- **Prompt orchestration.** Prompt templates cascade through manual, auto-tuned, and default sources using [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/overview) keyed clients for chat and embedding models.
-- **Deterministic integration tests.** Testcontainers spin up the real databases, while stub embeddings provide stable heuristics coverage so CI can validate the full pipeline.
+> ℹ️ Исходный Python-код доступен в [`submodules/graphrag-python`](submodules/graphrag-python) для параллельного сравнения. Считайте его read-only, если задача явно не требует изменений в submodule.
 
 ---
 
-## Repository Structure
+## Основные возможности
+
+- **Полный конвейер индексации.** Все стандартные этапы GraphRAG — загрузка документов, чанкинг, извлечение графа, построение сообществ и суммаризация — реализованы как отдельные workflow, которые регистрируются одним вызовом `AddGraphRag(...)`.
+- **Эвристики ingestion и сопровождения.** Встроенные перекрывающиеся окна чанков, семантическая дедупликация, связывание orphan-узлов, улучшение/валидация связей и обрезка по токен-бюджету помогают поддерживать чистоту графа без дополнительных сервисов.
+- **Быстрое выделение сообществ (label propagation).** Настраиваемый детектор fast label propagation (с fallback на connected components) повторяет поведение демо GraphRag.Net прямо внутри пайплайна.
+- **Подключаемые graph store.** Готовые адаптеры для Azure Cosmos DB, Neo4j и Apache AGE/PostgreSQL соответствуют `IGraphStore`, поэтому бэкенд можно менять без правок workflow.
+- **Оркестрация промптов.** Шаблоны промптов каскадируются по уровням manual, auto-tuned и default через keyed-клиенты [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/overview) для chat и embedding моделей.
+- **Детерминированные интеграционные тесты.** Testcontainers поднимает реальные базы, а stub embeddings обеспечивают стабильное покрытие эвристик, чтобы CI валидировал полный pipeline.
+
+---
+
+## Структура репозитория
 
 ```
 graphrag/
-├── GraphRag.slnx                          # Solution spanning runtime + test projects
+├── GraphRag.slnx                          # Solution: runtime + test projects
 ├── Directory.Build.props / Directory.Packages.props
 ├── src/
-│   ├── ManagedCode.GraphRag               # Core pipeline orchestration & abstractions
-│   ├── ManagedCode.GraphRag.CosmosDb      # Azure Cosmos DB graph adapter
-│   ├── ManagedCode.GraphRag.Neo4j         # Neo4j adapter & Bolt integration
-│   └── ManagedCode.GraphRag.Postgres      # Apache AGE/PostgreSQL graph adapter
+│   ├── ManagedCode.GraphRag               # Оркестрация core-пайплайна и абстракции
+│   ├── ManagedCode.GraphRag.CosmosDb      # Адаптер графа для Azure Cosmos DB
+│   ├── ManagedCode.GraphRag.Neo4j         # Адаптер Neo4j и интеграция Bolt
+│   └── ManagedCode.GraphRag.Postgres      # Адаптер Apache AGE/PostgreSQL
 ├── tests/
 │   └── ManagedCode.GraphRag.Tests
-│       ├── Integration/                   # Live container-backed scenarios
+│       ├── Integration/                   # Сценарии с реальными контейнерами
 │       └── … unit-level suites
 └── submodules/
-    └── graphrag-python                    # Original Python implementation (read-only)
+    └── graphrag-python                    # Исходная Python-реализация (read-only)
 ```
 
 ---
 
-## Prerequisites
+## Предварительные требования
 
-| Requirement | Notes |
+| Требование | Примечание |
 |-------------|-------|
-| [.NET SDK 10.0](https://dotnet.microsoft.com/download/dotnet/10.0) | The solution targets `net10.0`. Use the in-repo [`dotnet-install.sh`](dotnet-install.sh) helper on CI. |
-| Docker Desktop / compatible runtime | Required for Testcontainers-backed integration tests (Neo4j & Apache AGE/PostgreSQL). |
-| (Optional) Azure Cosmos DB Emulator | Set `COSMOS_EMULATOR_CONNECTION_STRING` to enable Cosmos-specific tests. |
+| [.NET SDK 10.0](https://dotnet.microsoft.com/download/dotnet/10.0) | Решение таргетит `net10.0`. В CI используйте скрипт [`dotnet-install.sh`](dotnet-install.sh) из репозитория. |
+| Docker Desktop / совместимый runtime | Нужен для интеграционных тестов на Testcontainers (Neo4j и Apache AGE/PostgreSQL). |
+| (Опционально) Azure Cosmos DB Emulator | Установите `COSMOS_EMULATOR_CONNECTION_STRING`, чтобы включить тесты Cosmos. |
 
 ---
 
-## Quick Start
+## Быстрый старт
 
-1. **Clone & initialise submodules**
+1. **Клонируйте репозиторий и инициализируйте submodule**
    ```bash
    git clone https://github.com/<your-org>/graphrag.git
    cd graphrag
    git submodule update --init --recursive
    ```
 
-2. **Install .NET 10 if needed**
+2. **Установите .NET 10 при необходимости**
    ```bash
    ./dotnet-install.sh --version 10.0.100
    export PATH="$HOME/.dotnet:$PATH"
    ```
 
-3. **Restore & build (always build before testing)**
+3. **Restore и build (всегда собирайте перед тестами)**
    ```bash
    dotnet build GraphRag.slnx
    ```
 
-4. **Run the full test suite**
+4. **Запустите полный набор тестов**
    ```bash
    dotnet test GraphRag.slnx --logger "console;verbosity=minimal"
    ```
-   This command restores packages, launches Neo4j and Apache AGE/PostgreSQL containers via Testcontainers, runs unit + integration tests, and tears everything down automatically.
+   Команда восстанавливает пакеты, поднимает контейнеры Neo4j и Apache AGE/PostgreSQL через Testcontainers, выполняет unit + integration тесты и автоматически всё завершает.
 
-5. **Target a specific scenario (optional)**
+5. **Запустите конкретный сценарий (опционально)**
    ```bash
    dotnet test tests/ManagedCode.GraphRag.Tests/ManagedCode.GraphRag.Tests.csproj \
        --filter "FullyQualifiedName~HeuristicMaintenanceIntegrationTests" \
        --logger "console;verbosity=normal"
    ```
 
-6. **Format before committing**
+6. **Форматируйте код перед коммитом**
    ```bash
    dotnet format GraphRag.slnx
    ```
 
 ---
 
-## Using GraphRAG in Your Application
+## Использование GraphRAG в вашем приложении
 
-Register GraphRAG services and provide keyed Microsoft.Extensions.AI clients for every model reference:
+Зарегистрируйте сервисы GraphRAG и предоставьте keyed-клиенты Microsoft.Extensions.AI для каждой ссылки на модель:
 
 ```csharp
 using Azure;
@@ -122,27 +122,27 @@ builder.Services.AddGraphRag();
 
 ---
 
-## Pipeline Cache & Extensibility
+## Кэш пайплайна и расширяемость
 
-Every workflow in a pipeline shares the same `IPipelineCache` instance via `PipelineRunContext`. The default DI registration wires up `MemoryPipelineCache`, letting workflows reuse expensive intermediate artefacts (LLM responses, chunk expansions, graph lookups) without recomputation. Swap in your own implementation by registering `IPipelineCache` before invoking `AddGraphRag()`—for example to persist cache entries or aggregate diagnostics.
+Каждый workflow в pipeline использует один и тот же `IPipelineCache` через `PipelineRunContext`. Регистрация DI по умолчанию подключает `MemoryPipelineCache`, что позволяет повторно использовать дорогие промежуточные артефакты (ответы LLM, расширения чанков, запросы к графу) без повторных вычислений. Вы можете заменить реализацию, зарегистрировав свой `IPipelineCache` до вызова `AddGraphRag()` — например, чтобы сохранять записи кэша или собирать диагностику.
 
-- **Child scopes.** `MemoryPipelineCache.CreateChild("stage")` prefixes keys with the stage name so multi-step workflows remain isolated.
-- **Debug payloads.** Entries can include optional debug data; clearing the cache removes both the value and associated trace metadata.
-- **Custom lifetimes.** Register a scoped cache if you want to align the cache with a single HTTP request rather than the default singleton lifetime.
+- **Child scopes.** `MemoryPipelineCache.CreateChild("stage")` добавляет префикс stage к ключам, чтобы изолировать многошаговые workflow.
+- **Debug payloads.** Записи могут содержать дополнительный debug payload; очистка кэша удаляет и значение, и связанные trace-метаданные.
+- **Custom lifetimes.** Зарегистрируйте scoped cache, если хотите ограничить его временем жизни одного HTTP-запроса вместо singleton по умолчанию.
 
 ---
 
-## Heuristic Ingestion & Maintenance
+## Эвристики ingestion и сопровождения
 
-The .NET port incorporates the ingestion behaviours showcased in GraphRag.Net directly inside the indexing pipeline:
+Порт .NET включает поведения ingestion из GraphRag.Net прямо в indexing pipeline:
 
-- **Overlapping chunk windows** produce coherent context spans that survive community trimming.
-- **Semantic deduplication** drops duplicate text units by comparing embedding cosine similarity against a configurable threshold.
-- **Token-budget trimming** automatically enforces global and per-community token ceilings during summarisation.
-- **Orphan-node linking** reconnects isolated entities through high-confidence relationships before finalisation.
-- **Relationship enhancement & validation** reconciles LLM output with existing edges to avoid duplicates while strengthening weights.
+- **Перекрывающиеся окна чанков** формируют связные контекстные фрагменты, устойчивые к обрезке сообществ.
+- **Семантическая дедупликация** отбрасывает дубликаты text unit, сравнивая косинусную близость эмбеддингов с настраиваемым порогом.
+- **Ограничение token budget** автоматически соблюдает глобальные и per-community лимиты токенов при суммаризации.
+- **Связывание orphan-узлов** повторно подключает изолированные сущности через высокодоверенные связи до финализации.
+- **Улучшение и валидация связей** согласует вывод LLM с существующими ребрами, чтобы избегать дублей и повышать веса.
 
-Configure the heuristics via `GraphRagConfig.Heuristics` (for example in `appsettings.json`):
+Настройка эвристик через `GraphRagConfig.Heuristics` (например, в `appsettings.json`):
 
 ```json
 {
@@ -168,13 +168,13 @@ Configure the heuristics via `GraphRagConfig.Heuristics` (for example in `appset
 }
 ```
 
-See [`docs/indexing-and-query.md`](docs/indexing-and-query.md) for the full list of knobs and how they map to the original research flow.
+См. [`docs/indexing-and-query.md`](docs/indexing-and-query.md) для полного списка параметров и соответствия оригинальному исследовательскому pipeline.
 
 ---
 
-## Configuration Parity
+## Паритет конфигурации
 
-The .NET configuration surface now mirrors the original Python CLI. `GraphRagConfig` exposes the same sections as `graphrag.config`, including cache providers, NLP-driven graph extraction, claim extraction, graph pruning, and every search mode (local/global/DRIFT/basic). This makes it straightforward to move existing Python configs across without rethinking every knob:
+Поверхность конфигурации .NET теперь соответствует исходному Python CLI. `GraphRagConfig` предоставляет те же секции, что и `graphrag.config`, включая cache providers, NLP-извлечение графа, извлечение claims, prune графа и все режимы поиска (local/global/DRIFT/basic). Это упрощает перенос существующих Python-конфигов без пересмотра всех параметров:
 
 ```json
 {
@@ -200,13 +200,13 @@ The .NET configuration surface now mirrors the original Python CLI. `GraphRagCon
 }
 ```
 
-`ClaimExtractionConfig.GetResolvedStrategy` mirrors the Python behaviour by loading prompt files from the configured root (and throwing if the file is missing) while still letting you override the entire `Strategy` block when needed.
+`ClaimExtractionConfig.GetResolvedStrategy` повторяет поведение Python: загружает prompt-файлы из настроенного корневого каталога (и выбрасывает исключение, если файл отсутствует), при этом оставляя возможность полностью переопределить блок `Strategy`.
 
 ---
 
-## Community Detection & Graph Analytics
+## Выделение сообществ и аналитика графа
 
-Community creation defaults to the fast label propagation algorithm. Tweak clustering directly through configuration:
+Создание сообществ по умолчанию использует алгоритм fast label propagation. Настройте кластеризацию напрямую через конфигурацию:
 
 ```json
 {
@@ -223,21 +223,21 @@ Community creation defaults to the fast label propagation algorithm. Tweak clust
 }
 ```
 
-If the graph is sparse, the pipeline falls back to connected components to ensure every node participates in a community. The heuristics integration tests (`Integration/HeuristicMaintenanceIntegrationTests.cs`) cover both the label propagation path and the connected-component fallback.
+Если граф разрежён, pipeline переключается на connected components, чтобы каждый узел попал в сообщество. Интеграционные тесты эвристик (`Integration/HeuristicMaintenanceIntegrationTests.cs`) покрывают как путь label propagation, так и fallback на connected components.
 
 ---
 
-## Integration Testing Strategy
+## Стратегия интеграционного тестирования
 
-- **Real services only.** All graph operations run against containerised Neo4j and Apache AGE/PostgreSQL instances provisioned by Testcontainers.
-- **Extended startup window.** The integration fixture raises `TestcontainersSettings.WaitStrategyTimeout` to 30 minutes (override via `GRAPH_RAG_CONTAINER_TIMEOUT_MINUTES`) so first-time Docker pulls for Cosmos, Janus, or AGE have enough time to complete before readiness checks fail.
-- **Cosmos tests opt-in.** The Cosmos DB emulator only starts when `GRAPH_RAG_ENABLE_COSMOS=true`; otherwise the keyed Cosmos services are skipped so CI runs faster.
-- **Deterministic heuristics.** `StubEmbeddingGenerator` guarantees stable embeddings so semantic-dedup and token-budget assertions remain reliable.
-- **Cross-store validation.** Shared integration fixtures verify that workflows succeed against each adapter (Cosmos tests activate when the emulator connection string is present).
-- **Prompt precedence.** Tests validate that manual prompt overrides win over auto-tuned variants while still cascading correctly to the default templates.
-- **Telemetry coverage.** Runtime tests assert pipeline callbacks and execution statistics so custom instrumentation keeps working.
+- **Только реальные сервисы.** Все graph-операции выполняются против контейнеризованных Neo4j и Apache AGE/PostgreSQL, поднятых через Testcontainers.
+- **Увеличенное окно запуска.** Интеграционный fixture повышает `TestcontainersSettings.WaitStrategyTimeout` до 30 минут (переопределяется через `GRAPH_RAG_CONTAINER_TIMEOUT_MINUTES`), чтобы первые Docker pull для Cosmos, Janus или AGE успевали завершиться до срабатывания readiness checks.
+- **Cosmos-тесты включаются по флагу.** Эмулятор Cosmos DB стартует только при `GRAPH_RAG_ENABLE_COSMOS=true`; иначе keyed-сервисы Cosmos пропускаются для ускорения CI.
+- **Детерминированные эвристики.** `StubEmbeddingGenerator` обеспечивает стабильные эмбеддинги, чтобы проверки semantic dedup и token budget оставались надёжными.
+- **Проверка между хранилищами.** Общие integration fixture подтверждают, что workflow успешно работает с каждым адаптером (Cosmos-сценарии активируются при наличии connection string эмулятора).
+- **Приоритет промптов.** Тесты подтверждают, что ручные overrides имеют приоритет над auto-tuned вариантами и корректно каскадируют к default templates.
+- **Покрытие телеметрии.** Runtime-тесты проверяют callbacks pipeline и статистику выполнения, чтобы пользовательская инструментализация не ломалась.
 
-To run just the container-backed suite:
+Чтобы запустить только container-backed suite:
 
 ```bash
 dotnet test tests/ManagedCode.GraphRag.Tests/ManagedCode.GraphRag.Tests.csproj \
@@ -247,15 +247,15 @@ dotnet test tests/ManagedCode.GraphRag.Tests/ManagedCode.GraphRag.Tests.csproj \
 
 ---
 
-## Graph Store Configuration
+## Настройка graph store
 
-GraphRAG ships with adapters for Apache AGE/PostgreSQL, Neo4j, and Azure Cosmos DB. Every adapter registers keyed services so you can address a specific store via `GetRequiredKeyedService<IGraphStore>("postgres")`, while the first registered store automatically becomes the unkeyed default (`GetRequiredService<IGraphStore>()`). This mirrors EF Core’s “one default context” pattern and removes any extra `MakeDefault` toggles.
+GraphRAG поставляется с адаптерами для Apache AGE/PostgreSQL, Neo4j и Azure Cosmos DB. Каждый адаптер регистрирует keyed-сервисы, поэтому конкретное хранилище можно получить через `GetRequiredKeyedService<IGraphStore>("postgres")`, а первое зарегистрированное автоматически становится unkeyed default (`GetRequiredService<IGraphStore>()`). Это соответствует подходу EF Core «один default context» и устраняет необходимость в дополнительных флагах `MakeDefault`.
 
-### Apache AGE / PostgreSQL Setup
+### Настройка Apache AGE / PostgreSQL
 
-GraphRAG ships with a first-class Apache AGE adapter (`ManagedCode.GraphRag.Postgres`). AGE is enabled on top of PostgreSQL, so you only need a standard Postgres instance with the AGE extension installed.
+GraphRAG включает полноценный адаптер Apache AGE (`ManagedCode.GraphRag.Postgres`). AGE включается поверх PostgreSQL, поэтому достаточно стандартного экземпляра Postgres с установленным расширением AGE.
 
-1. **Run an AGE-enabled Postgres instance.** The integration tests use the official container and you can do the same locally:
+1. **Запустите экземпляр Postgres с AGE.** Интеграционные тесты используют официальный контейнер, вы можете сделать то же локально:
    ```bash
    docker run --rm \
      -e POSTGRES_USER=postgres \
@@ -264,8 +264,8 @@ GraphRAG ships with a first-class Apache AGE adapter (`ManagedCode.GraphRag.Post
      -p 5432:5432 \
      apache/age:latest
    ```
-2. **Provide a connection string.** `AgeConnectionManager` accepts a standard Npgsql-style string (for example `Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=graphrag`). The manager automatically runs `CREATE EXTENSION IF NOT EXISTS age;`, `LOAD 'age';`, and `SET search_path = ag_catalog, "$user", public;` before any query executes.
-3. **Configure the store.** Either bind `PostgresGraphStoreOptions` in code or use configuration. The snippet below shows the JSON shape (environment variables can follow the same hierarchy, e.g. `GraphRag__GraphStores__postgres__ConnectionString`):
+2. **Задайте connection string.** `AgeConnectionManager` принимает стандартную строку в стиле Npgsql (например, `Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=graphrag`). Менеджер автоматически выполняет `CREATE EXTENSION IF NOT EXISTS age;`, `LOAD 'age';` и `SET search_path = ag_catalog, "$user", public;` перед любым запросом.
+3. **Настройте store.** Можно bind'ить `PostgresGraphStoreOptions` в коде или использовать конфигурацию. Ниже показан JSON-формат (переменные окружения следуют той же иерархии, например `GraphRag__GraphStores__postgres__ConnectionString`):
    ```json
    {
      "GraphRag": {
@@ -278,7 +278,7 @@ GraphRAG ships with a first-class Apache AGE adapter (`ManagedCode.GraphRag.Post
      }
    }
    ```
-4. **Register through DI.** `services.AddPostgresGraphStore("postgres", configure: ...)` wires up `IAgeConnectionManager`, `IAgeClientFactory`, `PostgresGraphStore`, `IGraphStore`, and `PostgresExplainService`. Pool sizing follows the standard Npgsql settings (configure `Max Pool Size`, `Timeout`, etc. inside the connection string). The first registration becomes the default unkeyed `IGraphStore`; additional stores remain keyed-only.
+4. **Зарегистрируйте через DI.** `services.AddPostgresGraphStore("postgres", configure: ...)` подключает `IAgeConnectionManager`, `IAgeClientFactory`, `PostgresGraphStore`, `IGraphStore` и `PostgresExplainService`. Настройки пула берутся из обычных параметров Npgsql (задавайте `Max Pool Size`, `Timeout` и т.д. в connection string). Первая регистрация становится default unkeyed `IGraphStore`; дополнительные stores остаются только keyed.
 
    ```csharp
    var services = new ServiceCollection()
@@ -315,9 +315,9 @@ GraphRAG ships with a first-class Apache AGE adapter (`ManagedCode.GraphRag.Post
    });
    ```
 
-   The `AgeConnectionManager` automatically retries transient `53300: too many clients` errors (up to three exponential backoff attempts) so scopes can wait for a free slot before failing. When a scope is disposed, the underlying `IAgeClientScope` created by `IAgeClientFactory` returns its connection to the pool, keeping concurrency predictable even under heavy fan-out.
+   `AgeConnectionManager` автоматически повторяет попытки при временных ошибках `53300: too many clients` (до трёх попыток с экспоненциальной задержкой), поэтому scope может дождаться свободного слота вместо немедленного сбоя. При Dispose scope базовый `IAgeClientScope`, созданный `IAgeClientFactory`, возвращает соединение в пул, сохраняя предсказуемую конкуррентность даже при высоком fan-out.
 
-   Need to tune pooling or other Npgsql settings? Set `options.ConfigureConnectionStringBuilder` / `ConfigureDataSourceBuilder` when registering the store:
+   Нужно настроить пул соединений или другие параметры Npgsql? Используйте `options.ConfigureConnectionStringBuilder` / `ConfigureDataSourceBuilder` при регистрации store:
 
    ```csharp
    builder.Services.AddPostgresGraphStore("postgres", options =>
@@ -335,11 +335,11 @@ GraphRAG ships with a first-class Apache AGE adapter (`ManagedCode.GraphRag.Post
    });
    ```
 
-### Neo4j Setup
+### Настройка Neo4j
 
-Neo4j support lives in `ManagedCode.GraphRag.Neo4j` and uses the official Bolt driver:
+Поддержка Neo4j находится в `ManagedCode.GraphRag.Neo4j` и использует официальный Bolt-драйвер:
 
-1. **Run Neo4j locally (optional).**
+1. **Запустите Neo4j локально (опционально).**
    ```bash
    docker run --rm \
      -e NEO4J_AUTH=neo4j/test1234 \
@@ -347,7 +347,7 @@ Neo4j support lives in `ManagedCode.GraphRag.Neo4j` and uses the official Bolt d
      -p 7687:7687 -p 7474:7474 \
      neo4j:5.23.0-community
    ```
-2. **Register the store.**
+2. **Зарегистрируйте store.**
    ```csharp
    builder.Services.AddNeo4jGraphStore("neo4j", options =>
    {
@@ -356,9 +356,9 @@ Neo4j support lives in `ManagedCode.GraphRag.Neo4j` and uses the official Bolt d
        options.Password = "test1234";
    });
    ```
-   The first Neo4j registration will automatically satisfy `IGraphStore`; use `GetRequiredKeyedService<IGraphStore>("neo4j")` for explicit access.
+   Первая регистрация Neo4j автоматически удовлетворяет `IGraphStore`; для явного доступа используйте `GetRequiredKeyedService<IGraphStore>("neo4j")`.
 
-   You can also override the auth token and driver config:
+   Также можно переопределить auth token и конфигурацию драйвера:
 
    ```csharp
 builder.Services.AddNeo4jGraphStore("neo4j", options =>
@@ -366,14 +366,14 @@ builder.Services.AddNeo4jGraphStore("neo4j", options =>
     options.Uri = "neo4j+s://example.databases.neo4j.io";
     options.AuthTokenFactory = _ => AuthTokens.Basic("user", "pass");
     options.ConfigureDriver = config => config.WithMaxConnectionPoolSize(50);
-    // Or bypass everything and provide your own driver:
+    // Или полностью подменить и предоставить свой драйвер:
     options.DriverFactory = opts => GraphDatabase.Driver(opts.Uri, AuthTokens.None);
 });
 ```
 
-### JanusGraph Setup
+### Настройка JanusGraph
 
-JanusGraph support (`ManagedCode.GraphRag.JanusGraph`) uses Gremlin.Net under the hood and now starts automatically in the integration fixture. Register it just like the other stores:
+Поддержка JanusGraph (`ManagedCode.GraphRag.JanusGraph`) использует Gremlin.Net и теперь запускается автоматически в интеграционном fixture. Регистрация выполняется так же, как и для остальных store:
 
 ```csharp
 builder.Services.AddJanusGraphStore("janus", options =>
@@ -389,14 +389,14 @@ builder.Services.AddJanusGraphStore("janus", options =>
 });
 ```
 
-By default the adapter uses a 32-connection pool with 64 in-flight requests per connection, but you can override those numbers (or mutate the underlying `ConnectionPoolSettings` directly) via the new option properties shown above.
+По умолчанию адаптер использует пул из 32 соединений и 64 in-flight запросов на соединение, но эти значения можно переопределить (или изменить `ConnectionPoolSettings` напрямую) через новые properties, показанные выше.
 
-### Azure Cosmos DB Setup
+### Настройка Azure Cosmos DB
 
-The Cosmos adapter (`ManagedCode.GraphRag.CosmosDb`) targets the SQL API and works with the emulator or live accounts:
+Адаптер Cosmos (`ManagedCode.GraphRag.CosmosDb`) ориентирован на SQL API и работает как с эмулятором, так и с боевыми аккаунтами:
 
-1. **Provide a connection string.** Set `COSMOS_EMULATOR_CONNECTION_STRING` or configure options manually.
-2. **Register the store.**
+1. **Укажите connection string.** Задайте `COSMOS_EMULATOR_CONNECTION_STRING` или настройте options вручную.
+2. **Зарегистрируйте store.**
    ```csharp
    builder.Services.AddCosmosGraphStore("cosmos", options =>
    {
@@ -411,62 +411,62 @@ The Cosmos adapter (`ManagedCode.GraphRag.CosmosDb`) targets the SQL API and wor
        options.ConfigureSerializer = serializer => serializer.PropertyNamingPolicy = null;
    });
    ```
-   As with other adapters, the first Cosmos store becomes the unkeyed default. If you already have a `CosmosClient`, set `options.ClientFactory` to return it and GraphRAG will reuse that instance.
+   Как и в других адаптерах, первый Cosmos store становится default unkeyed. Если у вас уже есть `CosmosClient`, задайте `options.ClientFactory`, чтобы он его возвращал, и GraphRAG переиспользует этот экземпляр.
 
-> **Tip:** `IGraphStore` now exposes full graph inspection and mutation helpers (`GetNodesAsync`, `GetRelationshipsAsync`, `DeleteNodesAsync`, `DeleteRelationshipsAsync`) in addition to the targeted APIs (`InitializeAsync`, `Upsert*`, `GetOutgoingRelationshipsAsync`). These use the same AGE-powered primitives, so you can inspect, prune, or export the graph without dropping down to concrete implementations.
+> **Подсказка:** `IGraphStore` теперь предоставляет полный набор методов инспекции и изменения графа (`GetNodesAsync`, `GetRelationshipsAsync`, `DeleteNodesAsync`, `DeleteRelationshipsAsync`) в дополнение к целевым API (`InitializeAsync`, `Upsert*`, `GetOutgoingRelationshipsAsync`). Эти методы используют те же AGE-базовые примитивы, поэтому граф можно инспектировать, очищать или экспортировать без перехода на конкретные реализации.
 
-> **Pagination:** `GetNodesAsync` and `GetRelationshipsAsync` accept an optional `GraphTraversalOptions` object (`new GraphTraversalOptions { Skip = 100, Take = 50 }`) if you want to page through very large graphs. The defaults stream everything, one record at a time, without materialising the entire graph in memory.
-
----
-
-## Credits
-
-- **pg-age** ([Allison-E/pg-age](https://github.com/Allison-E/pg-age)) — we vendor this Apache AGE client library (see `src/ManagedCode.GraphRag.Postgres/ApacheAge`) so GraphRAG for .NET can rely on a battle-tested connector. Many thanks to Allison and contributors for making AGE on PostgreSQL accessible.
+> **Пагинация:** `GetNodesAsync` и `GetRelationshipsAsync` принимают необязательный объект `GraphTraversalOptions` (`new GraphTraversalOptions { Skip = 100, Take = 50 }`), если нужно постранично обходить очень большие графы. По умолчанию методы стримят всё по одной записи, без материализации всего графа в памяти.
 
 ---
 
-## Additional Documentation & Diagrams
+## Благодарности
 
-- [`docs/indexing-and-query.md`](docs/indexing-and-query.md) explains how each workflow maps to the GraphRAG research diagrams (default data flow, query orchestrations, prompt tuning strategies) published at [microsoft.github.io/graphrag](https://microsoft.github.io/graphrag/).
-- [`docs/dotnet-port-plan.md`](docs/dotnet-port-plan.md) outlines the migration strategy from Python to .NET and references the canonical architecture diagrams used during the port.
-- The upstream documentation contains the latest diagrams for indexing, query, and data schema. Use those diagrams when presenting the system—it matches the pipeline implemented here.
+- **pg-age** ([Allison-E/pg-age](https://github.com/Allison-E/pg-age)) — мы вендорим эту библиотеку-клиент Apache AGE (см. `src/ManagedCode.GraphRag.Postgres/ApacheAge`), чтобы GraphRAG для .NET мог опираться на проверенный коннектор. Большое спасибо Allison и контрибьюторам за доступность AGE поверх PostgreSQL.
 
 ---
 
-## Local Cosmos Testing
+## Дополнительная документация и диаграммы
 
-1. Install and start the [Azure Cosmos DB Emulator](https://learn.microsoft.com/azure/cosmos-db/local-emulator).
-2. Export the connection string:
+- [`docs/indexing-and-query.md`](docs/indexing-and-query.md) объясняет, как каждый workflow соотносится с исследовательскими диаграммами GraphRAG (основной поток данных, оркестрации query, стратегии prompt tuning), опубликованными на [microsoft.github.io/graphrag](https://microsoft.github.io/graphrag/).
+- [`docs/dotnet-port-plan.md`](docs/dotnet-port-plan.md) описывает стратегию миграции с Python на .NET и ссылается на канонические архитектурные диаграммы, использованные при портировании.
+- Upstream-документация содержит самые свежие диаграммы для indexing, query и data schema. При представлении системы используйте именно их — они соответствуют реализованному здесь pipeline.
+
+---
+
+## Локальное тестирование Cosmos
+
+1. Установите и запустите [Azure Cosmos DB Emulator](https://learn.microsoft.com/azure/cosmos-db/local-emulator).
+2. Экспортируйте connection string:
    ```bash
    export COSMOS_EMULATOR_CONNECTION_STRING="AccountEndpoint=https://localhost:8081/;AccountKey=..."
    ```
-3. Run `dotnet test`; Cosmos-specific scenarios will seed the emulator and validate storage behaviour.
+3. Запустите `dotnet test`; сценарии Cosmos инициализируют эмулятор и проверят поведение хранилища.
 
 ---
 
-## Development Tips
+## Советы по разработке
 
-- **Solution layout.** Open `GraphRag.slnx` in your IDE for a full workspace view.
-- **Formatting & analyzers.** Run `dotnet format GraphRag.slnx` before committing.
-- **Coding conventions.** Nullable reference types and implicit usings are enabled; keep annotations accurate and suffix async methods with `Async`.
-- **Extending graph adapters.** Implement `IGraphStore` and register your service through DI when adding new storage back-ends.
-
----
-
-## Contributing
-
-1. Fork the repository and create a feature branch from `main`.
-2. Make your changes, ensuring `dotnet build GraphRag.slnx` succeeds before you run tests.
-3. Execute `dotnet test GraphRag.slnx` (with Docker running) and `dotnet format GraphRag.slnx` before opening a pull request.
-4. Include the test output in your PR description and link any related issues.
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidance.
+- **Структура solution.** Откройте `GraphRag.slnx` в вашей IDE, чтобы увидеть весь workspace.
+- **Форматирование и анализаторы.** Перед коммитом запускайте `dotnet format GraphRag.slnx`.
+- **Соглашения по коду.** Включены nullable reference types и implicit usings; следите за корректными аннотациями и добавляйте суффикс `Async` к асинхронным методам.
+- **Расширение graph-адаптеров.** Реализуйте `IGraphStore` и регистрируйте свой сервис через DI при добавлении новых storage back-end.
 
 ---
 
-## License & Credits
+## Вклад в проект
 
-- Licensed under the [MIT License](LICENSE).
-- GraphRAG is © Microsoft. This repository reimplements the pipelines for the .NET ecosystem while staying aligned with the official documentation and diagrams.
+1. Сделайте fork репозитория и создайте feature-ветку от `main`.
+2. Внесите изменения, убедившись, что `dotnet build GraphRag.slnx` проходит до запуска тестов.
+3. Выполните `dotnet test GraphRag.slnx` (при запущенном Docker) и `dotnet format GraphRag.slnx` перед созданием pull request.
+4. Включите вывод тестов в описание PR и укажите ссылки на связанные issue.
 
-Have questions or feedback? Open an issue or start a discussion—we’re actively evolving the .NET port and welcome contributions! 🚀
+Подробное руководство — в [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+---
+
+## Лицензия и авторские права
+
+- Распространяется по лицензии [MIT License](LICENSE).
+- GraphRAG © Microsoft. Этот репозиторий переосмысливает пайплайны для экосистемы .NET, сохраняя соответствие официальной документации и диаграммам.
+
+Есть вопросы или обратная связь? Откройте issue или начните discussion — мы активно развиваем .NET-порт и приветствуем вклад! 🚀

@@ -4,6 +4,16 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path="AGENTS.md" />
+    <File Path="CODEOWNERS" />
+    <File Path="CODE_OF_CONDUCT.md" />
+    <File Path="DEVELOPING.md" />
+    <File Path="RAI_TRANSPARENCY.md" />
+    <File Path="README.md" />
+    <File Path="SECURITY.md" />
+    <File Path="SUPPORT.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ManagedCode.GraphRag.CosmosDb/ManagedCode.GraphRag.CosmosDb.csproj" />
     <Project Path="src/ManagedCode.GraphRag.JanusGraph/ManagedCode.GraphRag.JanusGraph.csproj" />
