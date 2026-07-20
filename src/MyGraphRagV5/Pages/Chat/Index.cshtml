@@ -1,0 +1,58 @@
+@page
+@model MyGraphRagV5.Pages.Chat.IndexModel
+@{
+    ViewData["Title"] = "Поиск";
+}
+
+<div class="flex flex-col gap-6">
+    <section class="ember-panel p-6">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div>
+                <label for="project-select" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Проект</label>
+                <select id="project-select" name="ProjectId" onchange="this.form.submit()"
+                        class="mt-1 min-w-64 rounded-md border border-hairline bg-well px-3 py-2 text-sm text-ink">
+                    @foreach (var project in Model.Projects)
+                    {
+                        <option value="@project.Id" selected="@(project.Id == Model.ProjectId ? "selected" : null)">@project.Name</option>
+                    }
+                </select>
+            </div>
+        </form>
+    </section>
+
+    @if (Model.Projects.Count == 0)
+    {
+        <section class="ember-panel p-6">
+            <div class="ember-well p-6 text-center text-ink-muted">
+                <p>Проектов пока нет.</p>
+                <p class="mt-1 text-xs">Создайте проект на странице «Проекты», чтобы задавать вопросы.</p>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="ember-panel p-6">
+            <div id="chat-log" class="flex flex-col gap-4">
+                <p class="text-sm text-ink-muted">Задайте вопрос по индексированным данным проекта.</p>
+            </div>
+
+            <form method="post"
+                  class="mt-6 flex items-end gap-3"
+                  hx-post="/Chat?handler=Ask"
+                  hx-target="#chat-log"
+                  hx-swap="beforeend"
+                  hx-on::after-request="if (event.detail.successful) { this.reset(); }">
+                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                <div class="flex-1">
+                    <label for="question" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Вопрос</label>
+                    <input id="question" name="question" required autocomplete="off"
+                           class="mt-1 w-full rounded-md border border-hairline bg-well px-3 py-2 text-sm text-ink" />
+                </div>
+                <span class="htmx-indicator pb-2 text-xs text-ink-muted">Ищу ответ&hellip;</span>
+                <button type="submit" class="btn-default" style="border-color: var(--color-accent); color: var(--color-accent);">
+                    Спросить
+                </button>
+            </form>
+        </section>
+    }
+</div>

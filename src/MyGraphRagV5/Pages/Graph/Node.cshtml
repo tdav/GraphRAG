@@ -1,0 +1,84 @@
+@page
+@model MyGraphRagV5.Pages.Graph.NodeModel
+@{
+    ViewData["Title"] = "Узел графа";
+
+    string DescriptionOf(IReadOnlyDictionary<string, object?> properties) =>
+        properties.TryGetValue("description", out var value) && value is not null ? value.ToString()! : "—";
+}
+
+<div class="flex flex-col gap-6">
+    <a href="/Graph?ProjectId=@Model.ProjectId" class="text-xs text-ink-muted hover:text-accent">&larr; К списку сущностей</a>
+
+    @if (Model.Error is { } error)
+    {
+        <section class="ember-panel p-6">
+            <p class="text-sm text-danger">Не удалось загрузить узел: @error</p>
+        </section>
+    }
+    else if (Model.Node is null)
+    {
+        <section class="ember-panel p-6">
+            <div class="ember-well p-6 text-center text-ink-muted">
+                <p>Узел не найден.</p>
+            </div>
+        </section>
+    }
+    else
+    {
+        var node = Model.Node;
+        <section class="ember-panel p-6">
+            <p class="data-mono text-xs">@node.Id</p>
+            <h2 class="mt-1 text-lg font-semibold">@node.Label</h2>
+
+            @if (node.Properties.Count > 0)
+            {
+                <dl class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    @foreach (var pair in node.Properties)
+                    {
+                        <div>
+                            <dt class="text-xs uppercase tracking-wide text-ink-muted">@pair.Key</dt>
+                            <dd class="data-mono break-words text-sm">@(pair.Value?.ToString() ?? "—")</dd>
+                        </div>
+                    }
+                </dl>
+            }
+        </section>
+
+        <section class="ember-panel p-6">
+            <h2 class="text-base font-semibold">Исходящие связи</h2>
+            @if (Model.OutgoingRelationships.Count == 0)
+            {
+                <div class="ember-well mt-4 p-6 text-center text-ink-muted">
+                    <p>Исходящих связей нет.</p>
+                </div>
+            }
+            else
+            {
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-hairline text-xs uppercase tracking-wide text-ink-muted">
+                                <th class="py-2 pr-4 font-medium">Тип</th>
+                                <th class="py-2 pr-4 font-medium">Цель</th>
+                                <th class="py-2 pr-4 font-medium">Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rel in Model.OutgoingRelationships)
+                            {
+                                <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
+                                    <td class="py-2.5 pr-4 data-mono text-xs">@rel.Type</td>
+                                    <td class="py-2.5 pr-4">
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
+                                    </td>
+                                    <td class="py-2.5 pr-4 text-xs text-ink-muted">@DescriptionOf(rel.Properties)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+</div>

@@ -1,0 +1,134 @@
+@page
+@model MyGraphRagV5.Pages.Graph.IndexModel
+@{
+    ViewData["Title"] = "Граф";
+}
+
+<div class="flex flex-col gap-6">
+    <section class="ember-panel p-6">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div>
+                <label for="project-select" class="text-xs font-medium uppercase tracking-wide text-ink-muted">Проект</label>
+                <select id="project-select" name="ProjectId" onchange="this.form.submit()"
+                        class="mt-1 min-w-64 rounded-md border border-hairline bg-well px-3 py-2 text-sm text-ink">
+                    @foreach (var project in Model.Projects)
+                    {
+                        <option value="@project.Id" selected="@(project.Id == Model.ProjectId ? "selected" : null)">@project.Name</option>
+                    }
+                </select>
+            </div>
+        </form>
+        <p class="mt-3 text-xs text-ink-muted">
+            Сообщества (communities) здесь не показываются: они хранятся в векторной коллекции без API для перечисления, только сущности и связи графа AGE.
+        </p>
+    </section>
+
+    @if (Model.Projects.Count == 0)
+    {
+        <section class="ember-panel p-6">
+            <div class="ember-well p-6 text-center text-ink-muted">
+                <p>Проектов пока нет.</p>
+            </div>
+        </section>
+    }
+    else if (Model.Error is { } error)
+    {
+        <section class="ember-panel p-6">
+            <p class="text-sm text-danger">Не удалось загрузить граф: @error</p>
+        </section>
+    }
+    else
+    {
+        <section class="ember-panel p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-semibold">Сущности</h2>
+                <span class="data-mono text-xs text-ink-muted">Смещение: @Model.NodeSkip</span>
+            </div>
+            @if (Model.Nodes.Count == 0)
+            {
+                <div class="ember-well mt-4 p-6 text-center text-ink-muted">
+                    <p>Сущностей пока нет.</p>
+                </div>
+            }
+            else
+            {
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-hairline text-xs uppercase tracking-wide text-ink-muted">
+                                <th class="py-2 pr-4 font-medium">Id</th>
+                                <th class="py-2 pr-4 font-medium">Метка</th>
+                                <th class="py-2 pr-4 font-medium">Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var node in Model.Nodes)
+                            {
+                                <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
+                                    <td class="py-2.5 pr-4">
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(node.Id)" class="data-mono text-xs hover:text-accent">@node.Id</a>
+                                    </td>
+                                    <td class="py-2.5 pr-4">@node.Label</td>
+                                    <td class="py-2.5 pr-4 text-xs text-ink-muted">@MyGraphRagV5.Pages.Graph.IndexModel.DescriptionOf(node.Properties)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <div class="mt-4 flex justify-end gap-2">
+                <a class="btn-default @(Model.NodeSkip <= 0 ? "pointer-events-none opacity-50" : null)"
+                   href="/Graph?ProjectId=@Model.ProjectId&amp;NodeSkip=@Math.Max(0, Model.NodeSkip - MyGraphRagV5.Pages.Graph.IndexModel.PageSize)&amp;RelSkip=@Model.RelSkip">Назад</a>
+                <a class="btn-default @(Model.NodesHasMore ? null : "pointer-events-none opacity-50")"
+                   href="/Graph?ProjectId=@Model.ProjectId&amp;NodeSkip=@(Model.NodeSkip + MyGraphRagV5.Pages.Graph.IndexModel.PageSize)&amp;RelSkip=@Model.RelSkip">Далее</a>
+            </div>
+        </section>
+
+        <section class="ember-panel p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-semibold">Связи</h2>
+                <span class="data-mono text-xs text-ink-muted">Смещение: @Model.RelSkip</span>
+            </div>
+            @if (Model.Relationships.Count == 0)
+            {
+                <div class="ember-well mt-4 p-6 text-center text-ink-muted">
+                    <p>Связей пока нет.</p>
+                </div>
+            }
+            else
+            {
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-hairline text-xs uppercase tracking-wide text-ink-muted">
+                                <th class="py-2 pr-4 font-medium">Источник</th>
+                                <th class="py-2 pr-4 font-medium">Тип</th>
+                                <th class="py-2 pr-4 font-medium">Цель</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rel in Model.Relationships)
+                            {
+                                <tr class="border-b border-hairline last:border-0 hover:bg-surface/60">
+                                    <td class="py-2.5 pr-4">
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.SourceId)" class="data-mono text-xs hover:text-accent">@rel.SourceId</a>
+                                    </td>
+                                    <td class="py-2.5 pr-4 data-mono text-xs">@rel.Type</td>
+                                    <td class="py-2.5 pr-4">
+                                        <a href="/Graph/Node?ProjectId=@Model.ProjectId&Id=@Uri.EscapeDataString(rel.TargetId)" class="data-mono text-xs hover:text-accent">@rel.TargetId</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <div class="mt-4 flex justify-end gap-2">
+                <a class="btn-default @(Model.RelSkip <= 0 ? "pointer-events-none opacity-50" : null)"
+                   href="/Graph?ProjectId=@Model.ProjectId&amp;NodeSkip=@Model.NodeSkip&amp;RelSkip=@Math.Max(0, Model.RelSkip - MyGraphRagV5.Pages.Graph.IndexModel.PageSize)">Назад</a>
+                <a class="btn-default @(Model.RelationshipsHasMore ? null : "pointer-events-none opacity-50")"
+                   href="/Graph?ProjectId=@Model.ProjectId&amp;NodeSkip=@Model.NodeSkip&amp;RelSkip=@(Model.RelSkip + MyGraphRagV5.Pages.Graph.IndexModel.PageSize)">Далее</a>
+            </div>
+        </section>
+    }
+</div>

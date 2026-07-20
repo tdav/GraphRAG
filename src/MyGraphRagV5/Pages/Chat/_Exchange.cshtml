@@ -1,0 +1,40 @@
+@model MyGraphRagV5.Pages.Chat.IndexModel.ChatExchangeViewModel
+
+<div class="ember-well p-4">
+    <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Вопрос</p>
+    <p class="mt-1 text-sm">@Model.Question</p>
+</div>
+
+@if (Model.Error is { } error)
+{
+    <div class="ember-well p-4">
+        <p class="text-xs font-medium uppercase tracking-wide text-danger">Ошибка</p>
+        <p class="mt-1 text-sm text-danger">@error</p>
+    </div>
+}
+else if (Model.Answer is { } answer)
+{
+    <div class="ember-well p-4">
+        <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Ответ</p>
+        <p class="mt-1 whitespace-pre-wrap text-sm">@answer.Answer</p>
+
+        @if (answer.Sources.Count > 0)
+        {
+            <div class="mt-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-ink-muted">Источники</p>
+                <ul class="mt-2 flex flex-col gap-2">
+                    @foreach (var source in answer.Sources)
+                    {
+                        <li class="ember-panel p-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-sm font-medium">@source.Title</span>
+                                <span class="data-mono text-xs">@source.Score.ToString("F3")</span>
+                            </div>
+                            <p class="mt-1 data-mono text-xs">@source.Snippet</p>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
