@@ -2,7 +2,7 @@
     var currentPath = Context.Request.Path.Value ?? "/";
 
     bool IsActive(string href) => href == "/"
-        ? currentPath == "/"
+        ? currentPath.Equals("/", StringComparison.OrdinalIgnoreCase) || currentPath.Equals("/Index", StringComparison.OrdinalIgnoreCase)
         : currentPath.StartsWith(href, StringComparison.OrdinalIgnoreCase);
 
     string NavClass(string href) => IsActive(href) ? "nav-item is-active" : "nav-item";
@@ -26,20 +26,20 @@
     <div class="flex min-h-screen">
         <aside class="flex w-[260px] shrink-0 flex-col border-r border-hairline bg-panel">
             <div class="flex h-16 items-center gap-2 border-b border-hairline px-5">
-                <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
+                <span class="h-2.5 w-2.5 rounded-full" style="background-color: var(--color-ink-secondary);"></span>
                 <span class="text-base font-semibold">MyGraphRagV5</span>
             </div>
             <nav class="flex flex-1 flex-col gap-1 p-3">
-                <a href="/" class="@NavClass("/")">
+                <a href="/" class="@NavClass("/")" aria-current="@(IsActive("/") ? "page" : null)">
                     <span>Дашборд</span>
                 </a>
-                <a href="/Projects" class="@NavClass("/Projects")">
+                <a href="/Projects" class="@NavClass("/Projects")" aria-current="@(IsActive("/Projects") ? "page" : null)">
                     <span>Проекты</span>
                 </a>
-                <a href="/Chat" class="@NavClass("/Chat")">
+                <a href="/Chat" class="@NavClass("/Chat")" aria-current="@(IsActive("/Chat") ? "page" : null)">
                     <span>Поиск</span>
                 </a>
-                <a href="/Graph" class="@NavClass("/Graph")">
+                <a href="/Graph" class="@NavClass("/Graph")" aria-current="@(IsActive("/Graph") ? "page" : null)">
                     <span>Граф</span>
                 </a>
             </nav>
@@ -52,7 +52,8 @@
                     type="button"
                     id="theme-toggle"
                     class="btn-ghost"
-                    aria-label="Переключить тему">
+                    aria-label="Переключить тему"
+                    aria-pressed="false">
                     <span id="theme-toggle-label">Тёмная тема</span>
                 </button>
             </header>
@@ -74,6 +75,7 @@
 
             function render() {
                 label.textContent = currentTheme() === "light" ? "Светлая тема" : "Тёмная тема";
+                toggle.setAttribute("aria-pressed", currentTheme() === "light" ? "true" : "false");
             }
 
             toggle.addEventListener("click", function () {
